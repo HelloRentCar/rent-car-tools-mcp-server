@@ -104,19 +104,19 @@ async function handleSearchListV3(pickup: any, dropOff: any) {
     }
   });
   const data = await response.json();
-  if (+data.code !== 0) {
-    return {
-      content: [{
-        type: "text",
-        text: `RGeocoding failed: ${data.info || data.infocode}`
-      }],
-      isError: true
-    };
-  }
+  // if (+data.code !== 0) {
+  //   return {
+  //     content: [{
+  //       type: "text",
+  //       text: `RGeocoding failed: ${data.info || data.infocode}`
+  //     }],
+  //     isError: true
+  //   };
+  // }
   return {
     content: [{
       type: "text",
-      text: JSON.stringify(data?.data?.vehicles)
+      text: JSON.stringify(data?.data)
     }],
     isError: false
   };
