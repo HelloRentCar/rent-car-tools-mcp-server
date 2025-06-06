@@ -1,0 +1,33 @@
+{
+  "name": "@hb/rent-car-tools-mcp-server",
+  "version": "1.0.0-beta.1",
+  "description": "租车工具mcp服务",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "rent-car-tools-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "NODE_OPTIONS=\"--loader ts-node/esm\" node --trace-warnings src/index.ts ",
+    "dev:watch": "NODE_OPTIONS=\"--loader ts-node/esm\" nodemon --watch src --ext ts,json src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.2",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2",
+    "pino": "^8.16.0",
+    "pino-pretty": "^10.2.3",
+    "playwright-chromium": "^1.38.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "cross-env": "^7.0.3",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.2"
+  }
+}
