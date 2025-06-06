@@ -19,7 +19,7 @@ async function getFetch() {
 }
 const SEARCHCARLISTV3_TOOL = {
   name: "search_carList_page_v3",
-  description: "用户根据需求查询可预约车型数据",
+  description: "用户根据预期的取车时间和还车时间，地点查询可预约车辆商品数据",
   inputSchema: {
     type: "object",
     properties: {
@@ -36,11 +36,11 @@ const SEARCHCARLISTV3_TOOL = {
           },
           cityCode: {
             type: "string",
-            description: "取车城市adcode"
+            description: "取车城市区号, 如: 021"
           },
           dateTime: {
             type: "number",
-            description: '取车时间戳'
+            description: '取车时间毫秒戳, 如: 1747994400000'
           },
         },
         required: ["latitude", 'longitude', 'cityCode', 'dateTime']
@@ -58,11 +58,11 @@ const SEARCHCARLISTV3_TOOL = {
           },
           cityCode: {
             type: "string",
-            description: "还车城市adcode"
+            description: "取车城市区号, 如: 021"
           },
           dateTime: {
             type: "number",
-            description: '还车时间戳'
+            description: '取车时间毫秒戳, 如: 1747994400000'
           },
         },
         required: ["latitude", 'longitude', 'cityCode', 'dateTime']
