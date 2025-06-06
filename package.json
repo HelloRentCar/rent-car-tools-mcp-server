@@ -3,9 +3,8 @@
   "version": "1.0.0-beta.1",
   "description": "租车工具mcp服务",
   "type": "module",
-  "main": "dist/index.js",
   "bin": {
-    "rent-car-tools-mcp-server": "dist/index.js"
+    "rent-car-tools-mcp-server": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -29,5 +28,8 @@
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.1",
     "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
