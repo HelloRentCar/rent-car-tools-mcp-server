@@ -4,7 +4,7 @@
   "description": "租车工具mcp服务",
   "type": "module",
   "bin": {
-    "rent-car-tools-mcp-server": "./dist/index.js"
+    "mcp-server": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",

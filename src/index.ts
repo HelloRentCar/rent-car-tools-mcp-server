@@ -20,8 +20,8 @@ try {
 } catch (error) {
   // 如果读取失败，使用默认值
     packageInfo = {
-      name: '@hb/rent-car-tools-mcp-server',
-      version: '1.0.0'
+        name: '@hb/rent-car-tools-mcp-server',
+        version: '1.0.0-beta.0'
     };
 }
 const server = new Server({
