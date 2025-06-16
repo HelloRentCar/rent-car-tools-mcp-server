@@ -78,6 +78,7 @@ const MAPS_TOOLS: any[] = [
 async function handleSearchListV3(pickup: any, dropOff: any) {
   const fetch = await getFetch();
   const reqJson = {
+    "action": 'veh.search.page.v3',
     "pickupRentalInfo": {
       "cityCode": pickup?.cityCode, 
       "latitude": pickup?.latitude, 
@@ -96,7 +97,7 @@ async function handleSearchListV3(pickup: any, dropOff: any) {
   // url.searchParams.append("location", location);
   // // url.searchParams.append("key", AMAP_MAPS_API_KEY);
   // url.searchParams.append("source", "ts_mcp");
-  const response = await fetch('https://a.hellobike.com/rent/api?veh.search.page.v3', {
+  const response = await fetch('https://a.hellobike.com/rent/api', {
     method: "POST",
     body: reqJson,
     headers: {
