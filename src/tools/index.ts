@@ -39,12 +39,12 @@ const SEARCHCARLISTV3_TOOL = {
             type: "string",
             description: "取车城市区号, 如: 021"
           },
-          dateTime: {
+          datetime: {
             type: "number",
             description: '取车时间毫秒戳, 如: 用户取车时间为2025年06日18日下午四点, 毫秒戳为1750233600000'
           },
         },
-        required: ["latitude", 'longitude', 'cityCode', 'dateTime']
+        required: ["latitude", 'longitude', 'cityCode', 'datetime']
       },
       dropoffRentalInfo: {
         type: "object",
@@ -61,12 +61,12 @@ const SEARCHCARLISTV3_TOOL = {
             type: "string",
             description: "还车城市区号, 如: 上海市为021"
           },
-          dateTime: {
+          datetime: {
             type: "number",
             description: '还车时间毫秒戳, 如: 用户还车时间为2025年06日20日下午四点, 毫秒戳为1747994400000'
           },
         },
-        required: ["latitude", 'longitude', 'cityCode', 'dateTime']
+        required: ["latitude", 'longitude', 'cityCode', 'datetime']
       }
     },
     required: ["pickupRentalInfo", "dropoffRentalInfo"]
@@ -84,13 +84,13 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
       "cityCode": pickupRentalInfo?.cityCode || '021', 
       "latitude": pickupRentalInfo?.latitude || '31.23136', 
       "longitude": pickupRentalInfo?.longitude || '121.47004', 
-      "datetime": pickupRentalInfo?.dateTime
+      "datetime": pickupRentalInfo?.datetime
     }, 
     "dropoffRentalInfo": {
         "cityCode": dropoffRentalInfo?.cityCode || '021', 
         "latitude": dropoffRentalInfo?.latitude || '31.23136', 
         "longitude": dropoffRentalInfo?.longitude || '121.47004', 
-        "datetime": dropoffRentalInfo?.dateTime
+        "datetime": dropoffRentalInfo?.datetime
     }, 
     "pageIndex": 1, 
     "pageSize": 500, 
