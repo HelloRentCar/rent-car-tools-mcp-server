@@ -68,7 +68,7 @@ const SEARCHCARLISTV3_TOOL = {
         required: ["latitude", 'longitude', 'cityCode', 'dateTime']
       }
     },
-    required: ["pickup", "dropOff"]
+    required: ["pickupRentalInfo", "dropoffRentalInfo"]
   }
 };
 const MAPS_TOOLS: any[] = [
