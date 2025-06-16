@@ -89,7 +89,7 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
         "cityCode": dropoffRentalInfo?.cityCode, 
         "latitude": dropoffRentalInfo?.latitude, 
         "longitude": dropoffRentalInfo?.longitude, 
-        "datetime":new Date(dropoffRentalInfo?.dateTime).getTime()
+        "datetime": new Date(dropoffRentalInfo?.dateTime).getTime()
     }, 
     "pageIndex": 1, 
     "pageSize": 400, 
@@ -105,6 +105,10 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
     }
   });
   const data = await response.json();
+  console.error("询价running-response...", response)
+  console.error("询价running-reqJson...", reqJson)
+  console.error("询价running-data...", data)
+
   if (+data.code !== 0) {
     return {
       content: [{
