@@ -50,11 +50,11 @@ const SEARCHCARLISTV3_TOOL = {
         properties: {
           latitude: {
             type: "string",
-            description: "还车纬度, 根据用户输入的取车地址转换成对应的纬度"
+            description: "还车纬度, 根据用户输入的取车地址转换成对应的纬度, 如: 31.235993"
           },
           longitude: {
             type: "string",
-            description: "还车经度, 根据用户输入的取车地址转换成对应的经度"
+            description: "还车经度, 根据用户输入的取车地址转换成对应的经度, 如: 121.480168"
           },
           cityCode: {
             type: "string",
@@ -75,21 +75,21 @@ const MAPS_TOOLS: any[] = [
   SEARCHCARLISTV3_TOOL,
 ];
 
-async function handleSearchListV3(pickup: any, dropOff: any) {
+async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any) {
   const fetch = await getFetch();
   const reqJson = {
-    "action": 'veh.search.page.v3',
+    "action": "veh.search.page.v3",
     "pickupRentalInfo": {
-      "cityCode": pickup?.cityCode, 
-      "latitude": pickup?.latitude, 
-      "longitude": pickup?.longitude, 
-      "datetime": new Date(pickup?.dateTime).getTime()
+      "cityCode": pickupRentalInfo?.cityCode, 
+      "latitude": pickupRentalInfo?.latitude, 
+      "longitude": pickupRentalInfo?.longitude, 
+      "datetime": new Date(pickupRentalInfo?.dateTime).getTime()
     }, 
     "dropoffRentalInfo": {
-        "cityCode": dropOff?.cityCode, 
-        "latitude": dropOff?.latitude, 
-        "longitude": dropOff?.longitude, 
-        "datetime":new Date(dropOff?.dateTime).getTime()
+        "cityCode": dropoffRentalInfo?.cityCode, 
+        "latitude": dropoffRentalInfo?.latitude, 
+        "longitude": dropoffRentalInfo?.longitude, 
+        "datetime":new Date(dropoffRentalInfo?.dateTime).getTime()
     }, 
     "pageIndex": 1, 
     "pageSize": 400, 
@@ -97,7 +97,7 @@ async function handleSearchListV3(pickup: any, dropOff: any) {
   // url.searchParams.append("location", location);
   // // url.searchParams.append("key", AMAP_MAPS_API_KEY);
   // url.searchParams.append("source", "ts_mcp");
-  const response = await fetch('https://a.hellobike.com/rent/api', {
+  const response = await fetch('https://a.hellobike.com/rent/api?veh.search.page.v3', {
     method: "POST",
     body: reqJson,
     headers: {
@@ -133,8 +133,8 @@ export function registerRentCarsTool(server: Server) {
     try {
       switch (request.params.name) {
         case "search_carList_page_v3": {
-          const { pickup, dropOff} = request.params.arguments;
-          return await handleSearchListV3(pickup, dropOff);
+          const { pickupRentalInfo, dropoffRentalInfo} = request.params.arguments;
+          return await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo);
         }
         default:
           return {
