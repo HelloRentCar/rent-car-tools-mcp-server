@@ -21,7 +21,7 @@ try {
   // 如果读取失败，使用默认值
     packageInfo = {
         name: '@hb/rent-car-tools-mcp-server',
-        version: '1.0.0-beta.7'
+        version: '1.0.0-beta.8'
     };
 }
 const server = new Server({
