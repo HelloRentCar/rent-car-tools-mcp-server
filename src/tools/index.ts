@@ -23,7 +23,7 @@ const SEARCHCARLISTV3_TOOL = {
   inputSchema: {
     type: "object",
     properties: {
-      pickup: {
+      pickupRentalInfo: {
         type: "object",
         properties: {
           latitude: {
@@ -45,7 +45,7 @@ const SEARCHCARLISTV3_TOOL = {
         },
         required: ["latitude", 'longitude', 'cityCode', 'dateTime']
       },
-      dropOff: {
+      dropoffRentalInfo: {
         type: "object",
         properties: {
           latitude: {
