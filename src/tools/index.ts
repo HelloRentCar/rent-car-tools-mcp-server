@@ -29,11 +29,11 @@ const SEARCHCARLISTV3_TOOL = {
         properties: {
           latitude: {
             type: "string",
-            description: "取车纬度, 根据用户输入的取车地址转换成对应的纬度"
+            description: "取车纬度, 根据用户输入的取车地址转换成对应的纬度, 如: 上海市人民广场的经度是31.23356"
           },
           longitude: {
             type: "string",
-            description: "取车经度, 根据用户输入的取车地址转换成对应的经度"
+            description: "取车经度, 根据用户输入的取车地址转换成对应的经度, 如: 上海市人民广场的纬度是121.475914"
           },
           cityCode: {
             type: "string",
@@ -41,7 +41,7 @@ const SEARCHCARLISTV3_TOOL = {
           },
           dateTime: {
             type: "number",
-            description: '取车时间毫秒戳, 如: 1747994400000'
+            description: '取车时间毫秒戳, 如: 用户取车时间为2025年06日18日下午四点, 毫秒戳为1750233600000'
           },
         },
         required: ["latitude", 'longitude', 'cityCode', 'dateTime']
@@ -51,19 +51,19 @@ const SEARCHCARLISTV3_TOOL = {
         properties: {
           latitude: {
             type: "string",
-            description: "还车纬度, 根据用户输入的取车地址转换成对应的纬度, 如: 31.235993"
+            description: "还车纬度, 根据用户输入的取车地址转换成对应的纬度, 如: 上海市人民广场的经度是31.233568"
           },
           longitude: {
             type: "string",
-            description: "还车经度, 根据用户输入的取车地址转换成对应的经度, 如: 121.480168"
+            description: "还车经度, 根据用户输入的取车地址转换成对应的经度, 如: 上海市人民广场的纬度是121.475914"
           },
           cityCode: {
             type: "string",
-            description: "取车城市区号, 如: 021"
+            description: "还车城市区号, 如: 上海市为021"
           },
           dateTime: {
             type: "number",
-            description: '取车时间毫秒戳, 如: 1747994400000'
+            description: '还车时间毫秒戳, 如: 用户还车时间为2025年06日20日下午四点, 毫秒戳为1747994400000'
           },
         },
         required: ["latitude", 'longitude', 'cityCode', 'dateTime']
@@ -84,13 +84,13 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
       "cityCode": pickupRentalInfo?.cityCode || '021', 
       "latitude": pickupRentalInfo?.latitude || '31.23136', 
       "longitude": pickupRentalInfo?.longitude || '121.47004', 
-      "datetime": new Date(pickupRentalInfo?.dateTime).getTime()
+      "datetime": pickupRentalInfo?.dateTime
     }, 
     "dropoffRentalInfo": {
         "cityCode": dropoffRentalInfo?.cityCode || '021', 
         "latitude": dropoffRentalInfo?.latitude || '31.23136', 
         "longitude": dropoffRentalInfo?.longitude || '121.47004', 
-        "datetime": new Date(dropoffRentalInfo?.dateTime).getTime()
+        "datetime": dropoffRentalInfo?.dateTime
     }, 
     "pageIndex": 1, 
     "pageSize": 500, 
