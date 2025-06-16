@@ -104,15 +104,15 @@ async function handleSearchListV3(pickup: any, dropOff: any) {
     }
   });
   const data = await response.json();
-  // if (+data.code !== 0) {
-  //   return {
-  //     content: [{
-  //       type: "text",
-  //       text: `RGeocoding failed: ${data.info || data.infocode}`
-  //     }],
-  //     isError: true
-  //   };
-  // }
+  if (+data.code !== 0) {
+    return {
+      content: [{
+        type: "text",
+        text: `询价查询识别: ${data.data}`
+      }],
+      isError: true
+    };
+  }
   return {
     content: [{
       type: "text",
