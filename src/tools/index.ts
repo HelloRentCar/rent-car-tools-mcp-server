@@ -2,6 +2,7 @@
 // import { z } from "zod";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
+// import { mockData } from './mock'
 
 async function getFetch() {
   // Node.js 18+ 有内置的 fetch
@@ -80,19 +81,19 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
   const reqJson = {
     "action": "veh.search.page.v3",
     "pickupRentalInfo": {
-      "cityCode": pickupRentalInfo?.cityCode, 
-      "latitude": pickupRentalInfo?.latitude, 
-      "longitude": pickupRentalInfo?.longitude, 
+      "cityCode": pickupRentalInfo?.cityCode || '021', 
+      "latitude": pickupRentalInfo?.latitude || '31.23136', 
+      "longitude": pickupRentalInfo?.longitude || '121.47004', 
       "datetime": new Date(pickupRentalInfo?.dateTime).getTime()
     }, 
     "dropoffRentalInfo": {
-        "cityCode": dropoffRentalInfo?.cityCode, 
-        "latitude": dropoffRentalInfo?.latitude, 
-        "longitude": dropoffRentalInfo?.longitude, 
+        "cityCode": dropoffRentalInfo?.cityCode || '021', 
+        "latitude": dropoffRentalInfo?.latitude || '31.23136', 
+        "longitude": dropoffRentalInfo?.longitude || '121.47004', 
         "datetime": new Date(dropoffRentalInfo?.dateTime).getTime()
     }, 
     "pageIndex": 1, 
-    "pageSize": 400, 
+    "pageSize": 500, 
   }
   // url.searchParams.append("location", location);
   // // url.searchParams.append("key", AMAP_MAPS_API_KEY);
@@ -104,26 +105,27 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
       "Content-Type": "application/json"
     }
   });
-  const data = await response.json();
   console.error("询价running-response...", response)
+  const data = await response.json();
   console.error("询价running-reqJson...", reqJson)
   console.error("询价running-data...", data)
 
-  if (+data.code !== 0) {
+  if (data?.code && +data?.code === 0) {
     return {
       content: [{
         type: "text",
-        text: `询价查询识别: ${data.data}`
+        text: JSON.stringify(data?.data?.vehicles)
       }],
-      isError: true
+      isError: false
     };
   }
+  
   return {
     content: [{
       type: "text",
-      text: JSON.stringify(data?.data)
+      text: `询价查询识别: ${data?.msg}`
     }],
-    isError: false
+    isError: true
   };
 }
 
