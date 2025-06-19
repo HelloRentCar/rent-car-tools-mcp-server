@@ -2,6 +2,8 @@
 // import { z } from "zod";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
+import { ResponseResult } from "../types/index";
+import { ICarInfo } from "../types/searchPage";
 // import { mockData } from './mock'
 
 async function getFetch() {
@@ -70,6 +72,112 @@ const SEARCHCARLISTV3_TOOL = {
       }
     },
     required: ["pickupRentalInfo", "dropoffRentalInfo"]
+  },
+  outputSchema: {
+    type: "object",
+    properties: {
+      code: {
+        type: "number",
+        description: "响应状态码，0表示成功"
+      },
+      msg: {
+        type: "string",
+        description: "响应消息"
+      },
+      data: {
+        type: "object",
+        properties: {
+          groupName: {
+            type: "string",
+            description: "分组名称"
+          },
+          groupCode: {
+            type: "string",
+            description: "分组代码"
+          },
+          vehicles: {
+            type: "array",
+            description: "车型列表",
+            items: {
+              type: "object",
+              properties: {
+                vehicleTerms: {
+                  type: "string",
+                  description: "车型标签"
+                },
+                storeTerms: {
+                  type: "array",
+                  description: "门店标签",
+                  items: {
+                    type: "object",
+                    properties: {
+                      termCode: { type: "string", description: "标签code" },
+                      termType: { type: "string", description: "标签类型" },
+                      termName: { type: "string", description: "标签名称" },
+                      labelUrls: { 
+                        type: "array", 
+                        description: "标签图片",
+                        items: {
+                          type: "object",
+                          properties: {
+                            url: { type: "string", description: "图片URL地址" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                priceTotalNum: { type: "string", description: "报价数量" },
+                vehicleTotalNum: { type: "number", description: "子车型数量" },
+                minPriceSupplier: {
+                  type: "object",
+                  description: "最低报价信息",
+                  properties: {
+                    totalPrice: { type: "number", description: "总价" },
+                    dailyPrice: { type: "string", description: "日均价" },
+                    pickupType: { type: "string", description: "取车方式" },
+                    dropoffType: { type: "string", description: "还车方式" }
+                  }
+                },
+                firstPriceSupplier: {
+                  type: "object",
+                  description: "最先报价信息",
+                  properties: {
+                    totalPrice: { type: "number", description: "总价" },
+                    dailyPrice: { type: "string", description: "日均价" },
+                    pickupType: { type: "string", description: "取车方式" },
+                    dropoffType: { type: "string", description: "还车方式" }
+                  }
+                },
+                vehicleName: { type: "string", description: "聚合组名称" },
+                brandName: { type: "string", description: "品牌名" },
+                displacement: { type: "string", description: "排量，如'1.5L'" },
+                transmissionName: { type: "string", description: "自动或手动" },
+                passengerNo: { type: "string", description: "座位数" },
+                fuelTypeName: { type: "string", description: "燃油类型名称" },
+                doorNo: { type: "string", description: "车门数" },
+                licenseType: { type: "string", description: "车牌类型，如'蓝牌'" },
+                licenseTag: { type: "string", description: "牌照" },
+                needShowHelloBrand: { type: "boolean", description: "是否显示哈啰品牌店 banner" },
+                needShowSelfBrand: { type: "boolean", description: "是否显示哈啰自营 banner" },
+                fromSplit: { type: "boolean", description: "是否源自拆分" },
+                isShowRemand: { type: "boolean", description: "是否显示免押提示弹窗" },
+                shoppingGuideMsg: { type: "string", description: "车型导购语" },
+                locationSourceType: { type: "number", description: "0：固定位；1：普通算法排序" },
+                enterpriseInfo: { type: "array", description: "政企员工报价信息" },
+                mobileImgUrl: { type: "string", description: "车型图片" }
+              }
+            }
+          },
+          totalVehicleNum: {
+            type: "number",
+            description: "车型总数"
+          },
+        },
+        required: ["vehicles", "totalVehicleNum"]
+      }
+    },
+    required: ["code", "msg", "data"]
   }
 };
 const MAPS_TOOLS: any[] = [
@@ -93,28 +201,25 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
         "datetime": dropoffRentalInfo?.datetime
     }, 
     "pageIndex": 1, 
-    "pageSize": 500, 
+    "pageSize": 100, 
   }
   // url.searchParams.append("location", location);
   // // url.searchParams.append("key", AMAP_MAPS_API_KEY);
   // url.searchParams.append("source", "ts_mcp");
   const response = await fetch('https://a.hellobike.com/rent/api?veh.search.page.v3', {
     method: "POST",
-    body: reqJson,
+    body: JSON.stringify(reqJson),
     headers: {
       "Content-Type": "application/json"
     }
   });
-  console.error("询价running-response...", response)
-  const data = await response.json();
-  console.error("询价running-reqJson...", reqJson)
-  console.error("询价running-data...", data)
-
-  if (data?.code && +data?.code === 0) {
+  const data: ResponseResult<ICarInfo> = await response.json();
+  if (+data?.code === 0) {
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(data?.data?.vehicles)
+        text: `${data?.data?.vehicles}`
+
       }],
       isError: false
     };
@@ -123,7 +228,7 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
   return {
     content: [{
       type: "text",
-      text: `询价查询识别: ${data?.msg}`
+      text: `询价查询识别：${data?.msg}`
     }],
     isError: true
   };

@@ -20,7 +20,7 @@ const logFilePath = path.join(hellobikeDirPath, 'app.log');
 let enableConsoleOutput: boolean = false;
 
 // 文件日志实例 - 使用美化格式写入文件
-const fileLogger = pino.default({ 
+const fileLogger = pino({ 
   level: 'debug',
   transport: {
     target: 'pino-pretty',
@@ -35,7 +35,7 @@ const fileLogger = pino.default({
 });
 
 // 控制台日志实例 - 带颜色的美化输出
-const consoleLogger = pino.default({
+const consoleLogger = pino({
   level: 'debug',
   transport: {
     target: 'pino-pretty',
