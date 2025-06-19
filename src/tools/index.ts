@@ -218,7 +218,7 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
     return {
       content: [{
         type: "text",
-        text: `${data?.data?.vehicles}`
+        text: `${JSON.stringify(data?.data?.vehicles)}`
 
       }],
       isError: false
