@@ -1,10 +1,16 @@
 
 // import { z } from "zod";
+import path, { dirname }  from 'path';
+import * as fs from 'fs';
+import { fileURLToPath } from 'url';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { ResponseResult } from "../types/index";
 import { ICarInfo } from "../types/searchPage";
 // import { mockData } from './mock'
+// 获取当前模块的目录
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function getFetch() {
   // Node.js 18+ 有内置的 fetch
@@ -218,8 +224,8 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
     return {
       content: [{
         type: "text",
-        text: `${JSON.stringify(data?.data?.vehicles)}`
-
+        text: `数据处理中...`,
+        data: data?.data?.vehicles || [],
       }],
       isError: false
     };
@@ -234,18 +240,113 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
   };
 }
 
+// 车型数据分析函数
+function analyzeCarData(data: any) {
+  // 这里实现车型数据与用户需求的匹配逻辑
+  // 例如：分析价格区间、车型大小、品牌偏好等
+  
+  if (!data || data.isError) {
+    return "无有效数据可分析";
+  }
+  
+  try {
+    const carList = data?.content?.[0]?.data|| [];
+    
+    if (carList?.length === 0) {
+      return "未找到符合条件的车辆";
+    }
+    
+    // 按价格排序
+    const sortedByPrice = [...carList].sort((a: any, b: any) => 
+      (a.totalAmount || 0) - (b.totalAmount || 0)
+    );
+    
+    // 获取价格区间
+    const priceRange = {
+      lowest: sortedByPrice[0]?.totalAmount || 0,
+      highest: sortedByPrice[sortedByPrice.length - 1]?.totalAmount || 0,
+      average: sortedByPrice.reduce((sum: number, car: any) => sum + (car.totalAmount || 0), 0) / sortedByPrice.length
+    };
+    
+    // 车型分类统计
+    const carTypeCount: Record<string, number> = {};
+    carList.forEach((car: any) => {
+      const carType = car.carType || '未知';
+      carTypeCount[carType] = (carTypeCount[carType] || 0) + 1;
+    });
+    
+    return `找到${carList.length}辆符合条件的车辆。价格区间：¥${priceRange.lowest.toFixed(2)}-¥${priceRange.highest.toFixed(2)}，平均价格：¥${priceRange.average.toFixed(2)}。车型分布：${Object.entries(carTypeCount).map(([type, count]) => `${type}(${count}辆)`).join('、')}`;
+  } catch (error) {
+    console.error('分析车型数据时出错:', error);
+    return "分析车型数据时出现错误";
+  }
+}
+
 
 export function registerRentCarsTool(server: Server) {
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: MAPS_TOOLS,
   }));
   // 获取Token工具
-  server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
+  server.setRequestHandler(CallToolRequestSchema,  async (request: any) => {
     try {
       switch (request.params.name) {
         case "search_carList_page_v3": {
-          const { pickupRentalInfo, dropoffRentalInfo} = request.params.arguments;
-          return await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo);
+          let resultAll: any = [];
+          const { pickupRentalInfo, dropoffRentalInfo } = request.params.arguments;
+          const result = await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo);
+          // 将数据写入临时文件
+          const tempFilePath = path.join(__dirname, '../temp/carListData.json');
+          
+          try {
+            // 确保目录存在
+            const tempDir = path.dirname(tempFilePath);
+            if (!fs.existsSync(tempDir)) {
+              fs.mkdirSync(tempDir, { recursive: true });
+            }
+            
+            // 写入数据到临时文件
+            fs.writeFileSync(tempFilePath, JSON.stringify(result, null, 2));
+            
+            // 添加文件路径信息到返回结果
+            if (!result.isError) {
+              result.content.push({
+                type: "text",
+                text: `数据已保存到临时文件: ${tempFilePath}`,
+                data: [],
+              });
+            }
+          } catch (err) {
+            console.error('写入临时文件失败:', err);
+          }
+          // 添加数据分析逻辑
+          if (!result.isError && result.content) {
+            try {
+              // 读取临时文件中的数据进行分析
+              const tempFilePath = path.join(__dirname, `../temp/carListData.json?${Date.now()}`);
+              
+              if (fs.existsSync(tempFilePath)) {
+                const carListData = JSON.parse(fs.readFileSync(tempFilePath, 'utf8'));
+                
+                // 分析车型数据是否匹配用户需求
+                const analysisResult = analyzeCarData(carListData);
+                // 将分析结果添加到返回内容中
+                result.content.push({
+                  type: "text",
+                  data: [],
+                  text: `车型数据分析结果: ${analysisResult}`
+                });
+              }
+            } catch (err) {
+              console.error('数据分析失败:', err);
+              result.content.push({
+                type: "text",
+                data: [],
+                text: `数据分析过程中出现错误: ${err instanceof Error ? err.message : String(err)}`
+              });
+            }
+          }
+          return result;
         }
         default:
           return {

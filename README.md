@@ -47,3 +47,14 @@ npm start
   }
 }
 ```
+
+```json
+{
+  "mcpServers": {
+      "rent-car-tools-mcp-server": {
+      "type": "command",
+      "command": "node /Users/lilulu13753/hellobike/租车商户前端/rent-car-tools-mcp-server/dist/index.js"
+      }
+  }
+}
+```
