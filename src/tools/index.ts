@@ -49,7 +49,7 @@ const SEARCHCARLISTV3_TOOL = {
           },
           datetime: {
             type: "number",
-            description: '取车时间毫秒戳, 如: 用户取车时间为2025年06日18日下午四点, 毫秒戳为1750233600000'
+            description: '取车时间毫秒戳（注意：转化的年份为系统年份） 如: 用户还车时间为后天下午四点, 取的是new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() + 2 * 24 * 60 * 60 * 1000 + 16 * 60 * 60 * 1000'
           },
         },
         required: ["latitude", 'longitude', 'cityCode', 'datetime']
@@ -71,7 +71,7 @@ const SEARCHCARLISTV3_TOOL = {
           },
           datetime: {
             type: "number",
-            description: '还车时间毫秒戳, 如: 用户还车时间为2025年06日20日下午四点, 毫秒戳为1747994400000'
+            description: '还车时间毫秒戳（注意：转化的年份为系统年份） 如: 用户还车时间为后天下午四点, 取的是new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() + 2 * 24 * 60 * 60 * 1000 + 16 * 60 * 60 * 1000'
           },
         },
         required: ["latitude", 'longitude', 'cityCode', 'datetime']
@@ -226,6 +226,7 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
         type: "text",
         text: `数据处理中...`,
         data: data?.data?.vehicles || [],
+        requestId: data?.data?.requestId || '',
       }],
       isError: false
     };
@@ -234,7 +235,8 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
   return {
     content: [{
       type: "text",
-      text: `询价查询识别：${data?.msg}`
+      text: `询价查询识别：${data?.msg}`,
+      requestId: '',
     }],
     isError: true
   };
@@ -296,7 +298,7 @@ export function registerRentCarsTool(server: Server) {
           const { pickupRentalInfo, dropoffRentalInfo } = request.params.arguments;
           const result = await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo);
           // 将数据写入临时文件
-          const tempFilePath = path.join(__dirname, '../temp/carListData.json');
+          const tempFilePath = path.join(__dirname, `../temp/carListData.json?${Date.now()}-${result?.content?.[0]?.requestId ?? ''}`);
           
           try {
             // 确保目录存在
@@ -313,6 +315,7 @@ export function registerRentCarsTool(server: Server) {
               result.content.push({
                 type: "text",
                 text: `数据已保存到临时文件: ${tempFilePath}`,
+                requestId: result?.content?.[0]?.requestId || '',
                 data: [],
               });
             }
@@ -323,7 +326,7 @@ export function registerRentCarsTool(server: Server) {
           if (!result.isError && result.content) {
             try {
               // 读取临时文件中的数据进行分析
-              const tempFilePath = path.join(__dirname, `../temp/carListData.json?${Date.now()}`);
+              const tempFilePath = path.join(__dirname, `../temp/carListData.json?${Date.now()}-${result?.content?.[0]?.requestId ?? ''}`);
               
               if (fs.existsSync(tempFilePath)) {
                 const carListData = JSON.parse(fs.readFileSync(tempFilePath, 'utf8'));
@@ -334,6 +337,7 @@ export function registerRentCarsTool(server: Server) {
                 result.content.push({
                   type: "text",
                   data: [],
+                  requestId: result?.content?.[0]?.requestId || '',
                   text: `车型数据分析结果: ${analysisResult}`
                 });
               }
@@ -342,6 +346,7 @@ export function registerRentCarsTool(server: Server) {
               result.content.push({
                 type: "text",
                 data: [],
+                requestId: result?.content?.[0]?.requestId || '',
                 text: `数据分析过程中出现错误: ${err instanceof Error ? err.message : String(err)}`
               });
             }
