@@ -74,117 +74,10 @@ const SEARCHCARLISTV3_TOOL = {
             description: '还车时间毫秒戳（注意：转化的年份为系统年份） 如: 用户还车时间为后天下午四点, 取的是new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() + 2 * 24 * 60 * 60 * 1000 + 16 * 60 * 60 * 1000'
           },
         },
-        required: ["latitude", 'longitude', 'cityCode', 'datetime']
+        required: ['datetime']
       }
     },
-    required: ["pickupRentalInfo", "dropoffRentalInfo"]
   },
-  outputSchema: {
-    type: "object",
-    properties: {
-      code: {
-        type: "number",
-        description: "响应状态码，0表示成功"
-      },
-      msg: {
-        type: "string",
-        description: "响应消息"
-      },
-      data: {
-        type: "object",
-        properties: {
-          groupName: {
-            type: "string",
-            description: "分组名称"
-          },
-          groupCode: {
-            type: "string",
-            description: "分组代码"
-          },
-          vehicles: {
-            type: "array",
-            description: "车型列表",
-            items: {
-              type: "object",
-              properties: {
-                vehicleTerms: {
-                  type: "string",
-                  description: "车型标签"
-                },
-                storeTerms: {
-                  type: "array",
-                  description: "门店标签",
-                  items: {
-                    type: "object",
-                    properties: {
-                      termCode: { type: "string", description: "标签code" },
-                      termType: { type: "string", description: "标签类型" },
-                      termName: { type: "string", description: "标签名称" },
-                      labelUrls: { 
-                        type: "array", 
-                        description: "标签图片",
-                        items: {
-                          type: "object",
-                          properties: {
-                            url: { type: "string", description: "图片URL地址" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                priceTotalNum: { type: "string", description: "报价数量" },
-                vehicleTotalNum: { type: "number", description: "子车型数量" },
-                minPriceSupplier: {
-                  type: "object",
-                  description: "最低报价信息",
-                  properties: {
-                    totalPrice: { type: "number", description: "总价" },
-                    dailyPrice: { type: "string", description: "日均价" },
-                    pickupType: { type: "string", description: "取车方式" },
-                    dropoffType: { type: "string", description: "还车方式" }
-                  }
-                },
-                firstPriceSupplier: {
-                  type: "object",
-                  description: "最先报价信息",
-                  properties: {
-                    totalPrice: { type: "number", description: "总价" },
-                    dailyPrice: { type: "string", description: "日均价" },
-                    pickupType: { type: "string", description: "取车方式" },
-                    dropoffType: { type: "string", description: "还车方式" }
-                  }
-                },
-                vehicleName: { type: "string", description: "聚合组名称" },
-                brandName: { type: "string", description: "品牌名" },
-                displacement: { type: "string", description: "排量，如'1.5L'" },
-                transmissionName: { type: "string", description: "自动或手动" },
-                passengerNo: { type: "string", description: "座位数" },
-                fuelTypeName: { type: "string", description: "燃油类型名称" },
-                doorNo: { type: "string", description: "车门数" },
-                licenseType: { type: "string", description: "车牌类型，如'蓝牌'" },
-                licenseTag: { type: "string", description: "牌照" },
-                needShowHelloBrand: { type: "boolean", description: "是否显示哈啰品牌店 banner" },
-                needShowSelfBrand: { type: "boolean", description: "是否显示哈啰自营 banner" },
-                fromSplit: { type: "boolean", description: "是否源自拆分" },
-                isShowRemand: { type: "boolean", description: "是否显示免押提示弹窗" },
-                shoppingGuideMsg: { type: "string", description: "车型导购语" },
-                locationSourceType: { type: "number", description: "0：固定位；1：普通算法排序" },
-                enterpriseInfo: { type: "array", description: "政企员工报价信息" },
-                mobileImgUrl: { type: "string", description: "车型图片" }
-              }
-            }
-          },
-          totalVehicleNum: {
-            type: "number",
-            description: "车型总数"
-          },
-        },
-        required: ["vehicles", "totalVehicleNum"]
-      }
-    },
-    required: ["code", "msg", "data"]
-  }
 };
 const MAPS_TOOLS: any[] = [
   SEARCHCARLISTV3_TOOL,
@@ -201,13 +94,13 @@ async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any)
       "datetime": pickupRentalInfo?.datetime
     }, 
     "dropoffRentalInfo": {
-        "cityCode": dropoffRentalInfo?.cityCode || '021', 
-        "latitude": dropoffRentalInfo?.latitude || '31.23136', 
-        "longitude": dropoffRentalInfo?.longitude || '121.47004', 
+        "cityCode": dropoffRentalInfo?.cityCode || pickupRentalInfo?.cityCode || '021', 
+        "latitude": dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude || '31.23136', 
+        "longitude": dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude || '121.47004', 
         "datetime": dropoffRentalInfo?.datetime
     }, 
     "pageIndex": 1, 
-    "pageSize": 100, 
+    "pageSize": 500, 
   }
   // url.searchParams.append("location", location);
   // // url.searchParams.append("key", AMAP_MAPS_API_KEY);
