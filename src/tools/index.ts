@@ -1,250 +1,267 @@
-
 // import { z } from "zod";
-import path, { dirname }  from 'path';
-import * as fs from 'fs';
-import { fileURLToPath } from 'url';
+// import path, { dirname } from 'path';
+// import * as fs from 'fs';
+// import { fileURLToPath } from 'url';
+import QRCode from 'qrcode';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
-import { ResponseResult } from "../types/index";
-import { ICarInfo } from "../types/searchPage";
-// import { mockData } from './mock'
+import { insertVehicles } from './sqlite.js';
+import { handleSearchListV3, SEARCHCARLISTV3_TOOL } from './searchCarListPageV3.js';
+import * as eventsTool from './events.js';
 // 获取当前模块的目录
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 
-async function getFetch() {
-  // Node.js 18+ 有内置的 fetch
-  if (typeof globalThis.fetch !== 'undefined') {
-    return globalThis.fetch;
-  }
-  
-  // Node.js 16 需要使用 node-fetch
-  try {
-    const { default: fetch } = await import('node-fetch');
-    return fetch as any;
-  } catch (error) {
-    throw new Error('请安装 node-fetch: npm install node-fetch');
-  }
-}
-const SEARCHCARLISTV3_TOOL = {
-  name: "search_carList_page_v3",
-  description: "用户根据预期的取车时间和还车时间，地点查询可预约车辆商品数据",
+
+const ORDER_URL_LINK_TOOL = {
+  name: "order_url_link",
+  description: "根据用户输入的车型ID（字段为vehicleDisplayGroupId），返回的下单URL，需要以二维码图片的形式进行展示便于用户扫码操作",
   inputSchema: {
     type: "object",
     properties: {
-      pickupRentalInfo: {
-        type: "object",
-        properties: {
-          latitude: {
-            type: "string",
-            description: "取车纬度, 根据用户输入的取车地址转换成对应的纬度, 如: 上海市人民广场的经度是31.23356"
-          },
-          longitude: {
-            type: "string",
-            description: "取车经度, 根据用户输入的取车地址转换成对应的经度, 如: 上海市人民广场的纬度是121.475914"
-          },
-          cityCode: {
-            type: "string",
-            description: "取车城市区号, 如: 021"
-          },
-          datetime: {
-            type: "number",
-            description: '取车时间毫秒戳（注意：转化的年份为系统年份） 如: 用户还车时间为后天下午四点, 取的是new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() + 2 * 24 * 60 * 60 * 1000 + 16 * 60 * 60 * 1000'
-          },
-        },
-        required: ["latitude", 'longitude', 'cityCode', 'datetime']
-      },
-      dropoffRentalInfo: {
-        type: "object",
-        properties: {
-          latitude: {
-            type: "string",
-            description: "还车纬度, 根据用户输入的取车地址转换成对应的纬度, 如: 上海市人民广场的经度是31.233568"
-          },
-          longitude: {
-            type: "string",
-            description: "还车经度, 根据用户输入的取车地址转换成对应的经度, 如: 上海市人民广场的纬度是121.475914"
-          },
-          cityCode: {
-            type: "string",
-            description: "还车城市区号, 如: 上海市为021"
-          },
-          datetime: {
-            type: "number",
-            description: '还车时间毫秒戳（注意：转化的年份为系统年份） 如: 用户还车时间为后天下午四点, 取的是new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() + 2 * 24 * 60 * 60 * 1000 + 16 * 60 * 60 * 1000'
-          },
-        },
-        required: ['datetime']
+      vehicleDisplayGroupId: {
+        type: "string",
+        description: "车型ID，来源于 MCP工具 search_carList_page_v3 返回的minPriceSupplier.vehicleInfo.vehicleDisplayGroupId"
       }
-    },
-  },
-};
+    }
+  }
+}
+
 const MAPS_TOOLS: any[] = [
   SEARCHCARLISTV3_TOOL,
+  ORDER_URL_LINK_TOOL
 ];
 
-async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any) {
-  const fetch = await getFetch();
-  const reqJson = {
-    "action": "veh.search.page.v3",
-    "pickupRentalInfo": {
-      "cityCode": pickupRentalInfo?.cityCode || '021', 
-      "latitude": pickupRentalInfo?.latitude || '31.23136', 
-      "longitude": pickupRentalInfo?.longitude || '121.47004', 
-      "datetime": pickupRentalInfo?.datetime
-    }, 
-    "dropoffRentalInfo": {
-        "cityCode": dropoffRentalInfo?.cityCode || pickupRentalInfo?.cityCode || '021', 
-        "latitude": dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude || '31.23136', 
-        "longitude": dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude || '121.47004', 
-        "datetime": dropoffRentalInfo?.datetime
-    }, 
-    "pageIndex": 1, 
-    "pageSize": 500, 
-  }
-  // url.searchParams.append("location", location);
-  // // url.searchParams.append("key", AMAP_MAPS_API_KEY);
-  // url.searchParams.append("source", "ts_mcp");
-  const response = await fetch('https://a.hellobike.com/rent/api?veh.search.page.v3', {
-    method: "POST",
-    body: JSON.stringify(reqJson),
-    headers: {
-      "Content-Type": "application/json"
+const EVENTS_TOOLS = [
+  {
+    name: "search_events",
+    description: "搜索活动事件，支持关键词、地点、时间、类型等过滤。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "搜索关键词" },
+        location: { type: "string", description: "地点，可选" },
+        date_filter: { type: "string", description: "时间过滤，可选" },
+        event_type: { type: "string", description: "事件类型，可选" },
+        language: { type: "string", description: "语言代码，可选，默认en" },
+        country: { type: "string", description: "国家代码，可选，默认us" },
+        max_results: { type: "number", description: "最大返回数量，可选，默认20" }
+      }
     }
-  });
-  const data: ResponseResult<ICarInfo> = await response.json();
-  if (+data?.code === 0) {
-    return {
-      content: [{
-        type: "text",
-        text: `数据处理中...`,
-        data: data?.data?.vehicles || [],
-        requestId: data?.data?.requestId || '',
-      }],
-      isError: false
-    };
-  }
-  
-  return {
-    content: [{
-      type: "text",
-      text: `询价查询识别：${data?.msg}`,
-      requestId: '',
-    }],
-    isError: true
-  };
-}
-
-// 车型数据分析函数
-function analyzeCarData(data: any) {
-  // 这里实现车型数据与用户需求的匹配逻辑
-  // 例如：分析价格区间、车型大小、品牌偏好等
-  
-  if (!data || data.isError) {
-    return "无有效数据可分析";
-  }
-  
-  try {
-    const carList = data?.content?.[0]?.data|| [];
-    
-    if (carList?.length === 0) {
-      return "未找到符合条件的车辆";
+  },
+  {
+    name: "get_event_details",
+    description: "获取指定搜索ID的事件详情。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        searchId: { type: "string", description: "事件搜索ID" }
+      }
     }
-    
-    // 按价格排序
-    const sortedByPrice = [...carList].sort((a: any, b: any) => 
-      (a.totalAmount || 0) - (b.totalAmount || 0)
-    );
-    
-    // 获取价格区间
-    const priceRange = {
-      lowest: sortedByPrice[0]?.totalAmount || 0,
-      highest: sortedByPrice[sortedByPrice.length - 1]?.totalAmount || 0,
-      average: sortedByPrice.reduce((sum: number, car: any) => sum + (car.totalAmount || 0), 0) / sortedByPrice.length
-    };
-    
-    // 车型分类统计
-    const carTypeCount: Record<string, number> = {};
-    carList.forEach((car: any) => {
-      const carType = car.carType || '未知';
-      carTypeCount[carType] = (carTypeCount[carType] || 0) + 1;
-    });
-    
-    return `找到${carList.length}辆符合条件的车辆。价格区间：¥${priceRange.lowest.toFixed(2)}-¥${priceRange.highest.toFixed(2)}，平均价格：¥${priceRange.average.toFixed(2)}。车型分布：${Object.entries(carTypeCount).map(([type, count]) => `${type}(${count}辆)`).join('、')}`;
-  } catch (error) {
-    console.error('分析车型数据时出错:', error);
-    return "分析车型数据时出现错误";
+  },
+  {
+    name: "filter_events_by_date",
+    description: "按日期范围或具体日期过滤事件。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        searchId: { type: "string", description: "事件搜索ID" },
+        date_range: { type: "string", description: "日期范围，如today、week等，可选" },
+        specific_date: { type: "string", description: "具体日期YYYY-MM-DD，可选" }
+      }
+    }
+  },
+  {
+    name: "filter_events_by_type",
+    description: "按类型过滤事件。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        searchId: { type: "string", description: "事件搜索ID" },
+        event_types: { type: "array", items: { type: "string" }, description: "事件类型数组" }
+      }
+    }
+  },
+  {
+    name: "filter_events_by_venue",
+    description: "按场馆名称过滤事件。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        searchId: { type: "string", description: "事件搜索ID" },
+        venue_names: { type: "array", items: { type: "string" }, description: "场馆名称数组" }
+      }
+    }
+  },
+  {
+    name: "get_event_searches",
+    description: "获取所有已保存的事件搜索列表。",
+    inputSchema: { type: "object", properties: {} }
+  },
+  {
+    name: "get_event_search_details",
+    description: "获取指定搜索ID的详细事件搜索信息（markdown格式）。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        searchId: { type: "string", description: "事件搜索ID" }
+      }
+    }
+  },
+  {
+    name: "event_discovery_prompt",
+    description: "生成事件发现的AI提示词。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+        interests: { type: "string" },
+        date_preference: { type: "string" },
+        event_type: { type: "string" },
+        budget: { type: "string" }
+      }
+    }
+  },
+  {
+    name: "event_comparison_prompt",
+    description: "生成事件对比分析的AI提示词。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        searchId: { type: "string" }
+      }
+    }
   }
-}
+];
 
 
 export function registerRentCarsTool(server: Server) {
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: MAPS_TOOLS,
+    tools: [...MAPS_TOOLS, ...EVENTS_TOOLS],
   }));
   // 获取Token工具
-  server.setRequestHandler(CallToolRequestSchema,  async (request: any) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     try {
       switch (request.params.name) {
-        case "search_carList_page_v3": {
-          let resultAll: any = [];
-          const { pickupRentalInfo, dropoffRentalInfo } = request.params.arguments;
-          const result = await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo);
-          // 将数据写入临时文件
-          const tempFilePath = path.join(__dirname, `../temp/carListData.json?${Date.now()}-${result?.content?.[0]?.requestId ?? ''}`);
-          
+        case "order_url_link": {
+          const { vehicleDisplayGroupId } = request.params.arguments;
           try {
-            // 确保目录存在
-            const tempDir = path.dirname(tempFilePath);
-            if (!fs.existsSync(tempDir)) {
-              fs.mkdirSync(tempDir, { recursive: true });
-            }
-            
-            // 写入数据到临时文件
-            fs.writeFileSync(tempFilePath, JSON.stringify(result, null, 2));
-            
-            // 添加文件路径信息到返回结果
-            if (!result.isError) {
-              result.content.push({
+            //方案一：动态生成二维码
+            const url = "https://m.hellobike.com/rentcarstore";
+            const qrCode = await QRCode.toDataURL(url);
+            // 移除 data:image/png;base64, 前缀，只保留纯base64数据
+            const base64Data = qrCode.split(',')[1];
+            return {
+              content: [{
+                type: "image",
+                data: base64Data,
+                mimeType: 'image/png'
+              },
+              ],
+              isError: false
+            };
+
+            // // 方案二：使用本地静态图片作为回退
+            // const imagePath = path.join(__dirname, "../../order_link2.png");
+
+            // if (fs.existsSync(imagePath)) {
+            //   const imageBuffer = fs.readFileSync(imagePath);
+            //   const base64Image = imageBuffer.toString('base64');
+
+            //   return {
+            //     content: [{
+            //       type: "image",
+            //       data: base64Image,
+            //       mimeType: 'image/png'
+            //     },
+            //     {
+            //       type: "text",
+            //       text: "下单链接:https://m.hellobike.com/resource/gallery/971/1Iv7i2nM_https___m.hellobike.com_rentcarstore.png?x-oss-process=image/quality,q_80"
+            //     }],
+            //     isError: false
+            //   };
+            // }
+
+            // 方案三：使用远程URL作为最后的回退
+            // return {
+            //   content: [{
+            //     type: "image",
+            //     url: "https://m.hellobike.com/resource/gallery/971/1Iv7i2nM_https___m.hellobike.com_rentcarstore.png?x-oss-process=image/quality,q_80"
+            //   }],
+            //   isError: false
+            // };
+
+          } catch (error) {
+            console.error('生成二维码失败:', error);
+            return {
+              content: [{
                 type: "text",
-                text: `数据已保存到临时文件: ${tempFilePath}`,
-                requestId: result?.content?.[0]?.requestId || '',
-                data: [],
-              });
-            }
+                text: `生成二维码失败: ${error instanceof Error ? error.message : String(error)}`
+              }],
+              isError: true
+            };
+          }
+        }
+        case "search_carList_page_v3": {
+          const { pickupRentalInfo, dropoffRentalInfo, filter = [] } = request.params.arguments;
+          const result = await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo, filter);
+          // 将数据写入临时文件
+          if (result?.code !== 0) {
+            return {
+              content: [{
+                type: "text",
+                text: `询价查询失败: ${result?.msg}`,
+                requestId: result?.data?.requestId || '',
+              }],
+              isError: true
+            };
+          }
+          // 将数据写入数据库
+          try {
+            insertVehicles({
+              requestId: result?.data?.requestId || '',
+              vehicles: JSON.stringify({
+                vehicles: result?.data?.vehicles,
+              }, null, 2),
+            });
           } catch (err) {
-            console.error('写入临时文件失败:', err);
+            console.error('写入数据库失败:', err);
           }
-          // 添加数据分析逻辑
-          if (!result.isError && result.content) {
-            try {
-              // 读取临时文件中的数据进行分析
-              const tempFilePath = path.join(__dirname, `../temp/carListData.json?${Date.now()}-${result?.content?.[0]?.requestId ?? ''}`);
-              
-              if (fs.existsSync(tempFilePath)) {
-                const carListData = JSON.parse(fs.readFileSync(tempFilePath, 'utf8'));
-                
-                // 分析车型数据是否匹配用户需求
-                const analysisResult = analyzeCarData(carListData);
-                // 将分析结果添加到返回内容中
-                result.content.push({
-                  type: "text",
-                  data: [],
-                  requestId: result?.content?.[0]?.requestId || '',
-                  text: `车型数据分析结果: ${analysisResult}`
-                });
-              }
-            } catch (err) {
-              console.error('数据分析失败:', err);
-              result.content.push({
-                type: "text",
-                data: [],
-                requestId: result?.content?.[0]?.requestId || '',
-                text: `数据分析过程中出现错误: ${err instanceof Error ? err.message : String(err)}`
-              });
-            }
-          }
-          return result;
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify(result?.data?.vehicles || [])
+            }],
+            isError: false
+          };
+
+        }
+        case "search_events": {
+          return { content: [{ type: "json", data: await eventsTool.searchEvents(request.params.arguments) }], isError: false };
+        }
+        case "get_event_details": {
+          return { content: [{ type: "json", data: await eventsTool.getEventDetails(request.params.arguments.searchId) }], isError: false };
+        }
+        case "filter_events_by_date": {
+          return { content: [{ type: "json", data: await eventsTool.filterEventsByDate(request.params.arguments.searchId, request.params.arguments.date_range, request.params.arguments.specific_date) }], isError: false };
+        }
+        case "filter_events_by_type": {
+          return { content: [{ type: "json", data: await eventsTool.filterEventsByType(request.params.arguments.searchId, request.params.arguments.event_types) }], isError: false };
+        }
+        case "filter_events_by_venue": {
+          return { content: [{ type: "json", data: await eventsTool.filterEventsByVenue(request.params.arguments.searchId, request.params.arguments.venue_names) }], isError: false };
+        }
+        case "get_event_searches": {
+          return { content: [{ type: "markdown", text: await eventsTool.getEventSearches() }], isError: false };
+        }
+        case "get_event_search_details": {
+          return { content: [{ type: "markdown", text: await eventsTool.getEventSearchDetails(request.params.arguments.searchId) }], isError: false };
+        }
+        case "event_discovery_prompt": {
+          return { content: [{ type: "markdown", text: eventsTool.eventDiscoveryPrompt(request.params.arguments) }], isError: false };
+        }
+        case "event_comparison_prompt": {
+          return { content: [{ type: "markdown", text: eventsTool.eventComparisonPrompt(request.params.arguments.searchId) }], isError: false };
         }
         default:
           return {
