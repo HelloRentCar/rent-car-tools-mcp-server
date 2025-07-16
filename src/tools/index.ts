@@ -1,16 +1,11 @@
-// import { z } from "zod";
-// import path, { dirname } from 'path';
-// import * as fs from 'fs';
-// import { fileURLToPath } from 'url';
 import QRCode from 'qrcode';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { insertVehicles } from './sqlite.js';
-import { handleSearchListV3, SEARCHCARLISTV3_TOOL } from './searchCarListPageV3.js';
-import * as eventsTool from './events.js';
-// 获取当前模块的目录
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = dirname(__filename);
+import { handleSearchListV3, SEARCHCARLISTV3_TOOL } from './rentCar/searchCarListPageV3.js';
+// import * as eventsTool from './events.js';
+import { handleVehicleMorePriceListV3, VEHICLEMOREPRICELISTV3_TOOL } from './rentCar/vehicleMorePriceListV3.js';
+import * as AmapTool from './amap/index.js';
 
 
 const ORDER_URL_LINK_TOOL = {
@@ -21,123 +16,28 @@ const ORDER_URL_LINK_TOOL = {
     properties: {
       vehicleDisplayGroupId: {
         type: "string",
-        description: "车型ID，来源于 MCP工具 search_carList_page_v3 返回的minPriceSupplier.vehicleInfo.vehicleDisplayGroupId"
+        description: "聚合组ID，来源于 MCP工具 search_carList_page_v3 接口返回的车辆数据中vehicles字段中的vehicleDisplayGroupId"
       }
     }
   }
 }
 
-const MAPS_TOOLS: any[] = [
+const RENT_CAR_TOOLS: any[] = [
+  ORDER_URL_LINK_TOOL,
   SEARCHCARLISTV3_TOOL,
-  ORDER_URL_LINK_TOOL
+  VEHICLEMOREPRICELISTV3_TOOL
 ];
 
-const EVENTS_TOOLS = [
-  {
-    name: "search_events",
-    description: "搜索活动事件，支持关键词、地点、时间、类型等过滤。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        query: { type: "string", description: "搜索关键词" },
-        location: { type: "string", description: "地点，可选" },
-        date_filter: { type: "string", description: "时间过滤，可选" },
-        event_type: { type: "string", description: "事件类型，可选" },
-        language: { type: "string", description: "语言代码，可选，默认en" },
-        country: { type: "string", description: "国家代码，可选，默认us" },
-        max_results: { type: "number", description: "最大返回数量，可选，默认20" }
-      }
-    }
-  },
-  {
-    name: "get_event_details",
-    description: "获取指定搜索ID的事件详情。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        searchId: { type: "string", description: "事件搜索ID" }
-      }
-    }
-  },
-  {
-    name: "filter_events_by_date",
-    description: "按日期范围或具体日期过滤事件。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        searchId: { type: "string", description: "事件搜索ID" },
-        date_range: { type: "string", description: "日期范围，如today、week等，可选" },
-        specific_date: { type: "string", description: "具体日期YYYY-MM-DD，可选" }
-      }
-    }
-  },
-  {
-    name: "filter_events_by_type",
-    description: "按类型过滤事件。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        searchId: { type: "string", description: "事件搜索ID" },
-        event_types: { type: "array", items: { type: "string" }, description: "事件类型数组" }
-      }
-    }
-  },
-  {
-    name: "filter_events_by_venue",
-    description: "按场馆名称过滤事件。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        searchId: { type: "string", description: "事件搜索ID" },
-        venue_names: { type: "array", items: { type: "string" }, description: "场馆名称数组" }
-      }
-    }
-  },
-  {
-    name: "get_event_searches",
-    description: "获取所有已保存的事件搜索列表。",
-    inputSchema: { type: "object", properties: {} }
-  },
-  {
-    name: "get_event_search_details",
-    description: "获取指定搜索ID的详细事件搜索信息（markdown格式）。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        searchId: { type: "string", description: "事件搜索ID" }
-      }
-    }
-  },
-  {
-    name: "event_discovery_prompt",
-    description: "生成事件发现的AI提示词。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        location: { type: "string" },
-        interests: { type: "string" },
-        date_preference: { type: "string" },
-        event_type: { type: "string" },
-        budget: { type: "string" }
-      }
-    }
-  },
-  {
-    name: "event_comparison_prompt",
-    description: "生成事件对比分析的AI提示词。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        searchId: { type: "string" }
-      }
-    }
-  }
-];
+
 
 
 export function registerRentCarsTool(server: Server) {
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: [...MAPS_TOOLS, ...EVENTS_TOOLS],
+    tools: [
+      ...RENT_CAR_TOOLS,
+      ...AmapTool.MAPS_TOOLS,
+      // ...eventsTool.EVENTS_TOOLS
+    ],
   }));
   // 获取Token工具
   server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
@@ -205,64 +105,130 @@ export function registerRentCarsTool(server: Server) {
         case "search_carList_page_v3": {
           const { pickupRentalInfo, dropoffRentalInfo, filter = [] } = request.params.arguments;
           const result = await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo, filter);
-          // 将数据写入临时文件
-          if (result?.code !== 0) {
-            return {
-              content: [{
-                type: "text",
-                text: `询价查询失败: ${result?.msg}`,
-                requestId: result?.data?.requestId || '',
-              }],
-              isError: true
-            };
-          }
           // 将数据写入数据库
-          try {
-            insertVehicles({
-              requestId: result?.data?.requestId || '',
-              vehicles: JSON.stringify({
-                vehicles: result?.data?.vehicles,
-              }, null, 2),
-            });
-          } catch (err) {
-            console.error('写入数据库失败:', err);
-          }
-          return {
-            content: [{
+          if (!result.isError) {
+            try {
+              await insertVehicles({
+                requestId: result?.content?.[0]?.requestId || '',
+                vehicles: JSON.stringify({
+                  requestId: result?.content?.[0]?.requestId || '',
+                  sessionId: request.sessionId || '',
+                  // 获取当前会话id
+                  vehicleList: result?.content?.[0]?.data || [],
+                }, null, 2),
+              });
+              result.content.push({
+                type: "text",
+                text: `数据已保存到本地数据库`,
+                requestId: result?.content?.[0]?.requestId || '',
+                data: [],
+              });
+            } catch (err) {
+              console.error('写入数据库失败:', err);
+              result.content.push({
+                type: "text",
+                text: `写入数据库失败: ${err instanceof Error ? err.message : String(err)}`,
+                requestId: result?.content?.[0]?.requestId || '',
+                data: [],
+              });
+            }
+            result.content.push({
               type: "text",
-              text: JSON.stringify(result?.data?.vehicles || [])
-            }],
-            isError: false
-          };
-
+              text: `询价成功: ${JSON.stringify(result?.content?.[0]?.data || [])}`,
+              requestId: result?.content?.[0]?.requestId || '',
+              data: [],
+            });
+          }
+          return result;
         }
-        case "search_events": {
-          return { content: [{ type: "json", data: await eventsTool.searchEvents(request.params.arguments) }], isError: false };
+        case "vehicle_more_price_list_v3": {
+          const { pickupRentalInfo, dropoffRentalInfo, groupCode, vehicleDisplayGroupId } = request.params.arguments;
+          const result = await handleVehicleMorePriceListV3(pickupRentalInfo, dropoffRentalInfo, groupCode, vehicleDisplayGroupId);
+          if (!result.isError) {
+            result.content.push({
+              type: "text",
+              text: `该车型下更多供应商报价查询识别: ${JSON.stringify(result?.content?.[0]?.data || [])}`,
+              requestId: result?.content?.[0]?.requestId || '',
+              data: [],
+            });
+          }
+          return result;
         }
-        case "get_event_details": {
-          return { content: [{ type: "json", data: await eventsTool.getEventDetails(request.params.arguments.searchId) }], isError: false };
+        case "maps_regeocode": {
+            const { location } = request.params.arguments;
+            return await AmapTool.handleReGeocode(location);
         }
-        case "filter_events_by_date": {
-          return { content: [{ type: "json", data: await eventsTool.filterEventsByDate(request.params.arguments.searchId, request.params.arguments.date_range, request.params.arguments.specific_date) }], isError: false };
+        case "maps_geo": {
+            const { address, city } = request.params.arguments;
+            return await AmapTool.handleGeo(address, city);
         }
-        case "filter_events_by_type": {
-          return { content: [{ type: "json", data: await eventsTool.filterEventsByType(request.params.arguments.searchId, request.params.arguments.event_types) }], isError: false };
+        case "maps_ip_location": {
+            const { ip } = request.params.arguments;
+            return await AmapTool.handleIPLocation(ip);
         }
-        case "filter_events_by_venue": {
-          return { content: [{ type: "json", data: await eventsTool.filterEventsByVenue(request.params.arguments.searchId, request.params.arguments.venue_names) }], isError: false };
+        case "maps_weather": {
+            const { city } = request.params.arguments;
+            return await AmapTool.handleWeather(city);
         }
-        case "get_event_searches": {
-          return { content: [{ type: "markdown", text: await eventsTool.getEventSearches() }], isError: false };
+        case "maps_search_detail": {
+            const { id } = request.params.arguments;
+            return await AmapTool.handleSearchDetail(id);
         }
-        case "get_event_search_details": {
-          return { content: [{ type: "markdown", text: await eventsTool.getEventSearchDetails(request.params.arguments.searchId) }], isError: false };
+        case "maps_bicycling": {
+            const { origin, destination } = request.params.arguments;
+            return await AmapTool.handleBicycling(origin, destination);
         }
-        case "event_discovery_prompt": {
-          return { content: [{ type: "markdown", text: eventsTool.eventDiscoveryPrompt(request.params.arguments) }], isError: false };
+        case "maps_direction_walking": {
+            const { origin, destination } = request.params.arguments;
+            return await AmapTool.handleWalking(origin, destination);
         }
-        case "event_comparison_prompt": {
-          return { content: [{ type: "markdown", text: eventsTool.eventComparisonPrompt(request.params.arguments.searchId) }], isError: false };
+        case "maps_direction_driving": {
+            const { origin, destination } = request.params.arguments;
+            return await AmapTool.handleDriving(origin, destination);
         }
+        case "maps_direction_transit_integrated": {
+            const { origin, destination, city, cityd } = request.params.arguments;
+            return await AmapTool.handleTransitIntegrated(origin, destination, city, cityd);
+        }
+        case "maps_distance": {
+            const { origins, destination, type } = request.params.arguments;
+            return await AmapTool.handleDistance(origins, destination, type);
+        }
+        case "maps_text_search": {
+            const { keywords, city, citylimit } = request.params.arguments;
+            return await AmapTool.handleTextSearch(keywords, city, citylimit);
+        }
+        case "maps_around_search": {
+            const { location, radius, keywords } = request.params.arguments;
+            return await AmapTool.handleAroundSearch(location, radius, keywords);
+        }
+        // case "search_events": {
+        //   return { content: [{ type: "json", data: await eventsTool.searchEvents(request.params.arguments) }], isError: false };
+        // }
+        // case "get_event_details": {
+        //   return { content: [{ type: "json", data: await eventsTool.getEventDetails(request.params.arguments.searchId) }], isError: false };
+        // }
+        // case "filter_events_by_date": {
+        //   return { content: [{ type: "json", data: await eventsTool.filterEventsByDate(request.params.arguments.searchId, request.params.arguments.date_range, request.params.arguments.specific_date) }], isError: false };
+        // }
+        // case "filter_events_by_type": {
+        //   return { content: [{ type: "json", data: await eventsTool.filterEventsByType(request.params.arguments.searchId, request.params.arguments.event_types) }], isError: false };
+        // }
+        // case "filter_events_by_venue": {
+        //   return { content: [{ type: "json", data: await eventsTool.filterEventsByVenue(request.params.arguments.searchId, request.params.arguments.venue_names) }], isError: false };
+        // }
+        // case "get_event_searches": {
+        //   return { content: [{ type: "markdown", text: await eventsTool.getEventSearches() }], isError: false };
+        // }
+        // case "get_event_search_details": {
+        //   return { content: [{ type: "markdown", text: await eventsTool.getEventSearchDetails(request.params.arguments.searchId) }], isError: false };
+        // }
+        // case "event_discovery_prompt": {
+        //   return { content: [{ type: "markdown", text: eventsTool.eventDiscoveryPrompt(request.params.arguments) }], isError: false };
+        // }
+        // case "event_comparison_prompt": {
+        //   return { content: [{ type: "markdown", text: eventsTool.eventComparisonPrompt(request.params.arguments.searchId) }], isError: false };
+        // }
         default:
           return {
             content: [{

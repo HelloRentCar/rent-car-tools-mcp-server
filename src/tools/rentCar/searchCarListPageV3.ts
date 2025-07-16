@@ -1,14 +1,14 @@
 import { z } from "zod";
-import { getFetch } from "../common/index.js";
-import { ResponseResult } from "../types";
-import { ICarInfo } from "../types/searchPage";
+import { getFetch } from "../../common/index.js";
+import { ResponseResult } from "../../types/index.js";
+import { ICarInfo } from "../../types/searchPage.js";
 
 /**
  * 查询车辆列表工具
  */
 export const SEARCHCARLISTV3_TOOL = {
   name: "search_carList_page_v3",
-  description: "用户根据未来的取车时间和还车时间和地点查询可预约车辆商品和价格数据。数据的返回格式为json格式，请根据返回的json格式进行处理。orderUrlLink字段为下单链接是个二维码图片，如果有下订单需求需要展示这个图片",
+  description: "用户根据未来的取车时间和还车时间和地点查询可预约车辆商品和价格数据。",
   inputSchema: {
     type: "object",
     properties: {
@@ -120,7 +120,7 @@ export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInf
     },
     "filter": filter || [],
     "pageIndex": 1,
-    "pageSize": 100,
+    "pageSize": 40,
   }
   const response = await fetch('https://a.hellobike.com/rent/api?veh.search.page.v3', {
     method: "POST",
@@ -132,29 +132,51 @@ export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInf
   const fullData: ResponseResult<ICarInfo> = await response.json();
 
   // if (+fullData.code === 0) {
-  const filteredVehicles = fullData?.data?.vehicles?.map((vehicle) => ({
-    vehicleTotalNum: vehicle?.vehicleTotalNum,
-    minPriceSupplier: vehicle?.minPriceSupplier,
-    vehicleDisplayGroupId: vehicle?.vehicleDisplayGroupId,
-    brandName: vehicle?.brandName,
-    transmissionType: vehicle?.transmissionType,
-    transmissionName: vehicle?.transmissionName,
-    fuelTypeName: vehicle?.fuelTypeName,
-    licenseType: vehicle?.licenseType,
-    licenseTag: vehicle?.licenseTag,
-    shoppingGuideMsg: vehicle?.shoppingGuideMsg,
-    locationSourceType: vehicle?.locationSourceType,
-    enterpriseInfo: vehicle?.enterpriseInfo,
-  })) || [];
-  console.log('filteredVehicles...', filteredVehicles);
+  // const filteredVehicles = fullData?.data?.vehicles?.map((vehicle) => ({
+  //   vehicleTotalNum: vehicle?.vehicleTotalNum,
+  //   minPriceSupplier: vehicle?.minPriceSupplier,
+  //   vehicleDisplayGroupId: vehicle?.vehicleDisplayGroupId,
+  //   brandName: vehicle?.brandName,
+  //   transmissionType: vehicle?.transmissionType,
+  //   transmissionName: vehicle?.transmissionName,
+  //   fuelTypeName: vehicle?.fuelTypeName,
+  //   licenseType: vehicle?.licenseType,
+  //   licenseTag: vehicle?.licenseTag,
+  //   shoppingGuideMsg: vehicle?.shoppingGuideMsg,
+  //   locationSourceType: vehicle?.locationSourceType,
+  //   enterpriseInfo: vehicle?.enterpriseInfo,
+  // })) || [];
+  // console.log('filteredVehicles...', filteredVehicles);
+  // return {
+  //   code: fullData?.code,
+  //   msg: fullData?.msg,
+  //   data: {
+  //     vehicles: filteredVehicles,
+  //     totalVehicleNum: fullData?.data?.totalVehicleNum || 0,
+  //     requestId: fullData?.data?.requestId || '',
+  //   }
+  // };
+  // return fullData;
+  if (+fullData?.code === 0) {
+    return {
+      content: [{
+        type: "text",
+        text: `数据处理中...`,
+        data: fullData?.data?.vehicles || [],
+        requestId: fullData?.data?.requestId || '',
+      }],
+      isError: false
+    };
+  }
+
   return {
-    code: fullData?.code,
-    msg: fullData?.msg,
-    data: {
-      vehicles: filteredVehicles,
-      totalVehicleNum: fullData?.data?.totalVehicleNum || 0,
-      requestId: fullData?.data?.requestId || '',
-    }
+    content: [{
+      type: "text",
+      text: `询价查询识别：${fullData?.msg}`,
+      data: [],
+      requestId: '',
+    }],
+    isError: true
   };
 }
 

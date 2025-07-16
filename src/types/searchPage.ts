@@ -54,7 +54,8 @@ export interface IVehicles {
 	firstPriceSupplier?:IMinPriceSupplier; // 最先报价信息
 	suppliers?:any[];                    // 供应商列表，提供该车型的所有供应商
 	childVehicleList?:any[];             // 子车型列表，同品牌下的其他车型
-	vehicleDisplayGroupId?:string;       // 聚合组ID
+	vehicleDisplayGroupId?: string;       // 聚合组ID
+	groupCode?:string;                   // 车型分组code
 	vehicleName?:string;                 // 聚合组名称
 	brandName?:string;                   // 品牌名
 	groupName?:string;                   // 分组名称
@@ -77,7 +78,6 @@ export interface IVehicles {
 }
 export interface ICarInfo {
 	groupName?:string;
-	groupCode?:string;
 	vehicles?:IVehicles[]; // 车型列表
 	totalVehicleNum?:number; // 车型总数
 	guideTermList?:any[]; //即时用车筛选引导
@@ -91,4 +91,119 @@ export interface ICarInfo {
 	meituanCardTwiceQuery?:boolean; // 美团卡是否进行了二次查询
 	cardMatchGoodsGroupSize?:number; // 次卡匹配商品群组的数量
 	longTermReduction?:boolean;//是否命中长租期保险折扣
+}
+
+
+
+// 门店标签图片
+export interface ILabelUrl {
+  status: string;
+  url: string;
+}
+
+// 门店标签
+export interface IStoreTerm {
+  termType: number;
+  viewType: number;
+  termName: string;
+  termCode: string;
+  labelUrls?: ILabelUrl[];
+}
+
+// 角标标签
+export interface ICornerTerm {
+  termType: number;
+  viewType: number;
+  termName: string;
+  termCode: string;
+}
+
+// 供应商信息
+export interface ISupplierInfo {
+  supplierName: string;
+  supplierCode: string;
+  companyId: string;
+  companyName: string;
+  supplierTerms: any[]; // 可细化
+}
+
+// 车型信息
+export interface IVehicleInfo {
+  vehicleDisplayGroupId: string;
+  vehicleDisplayGroupName: string;
+  vehicleSeriesName: string;
+  vehicleSeriesId: string;
+  vehicleModelId: string;
+  vehicleCode: string;
+  vehicleName: string;
+  groupCode: string;
+  groupName: string;
+  brandName: string;
+  displacement: string;
+  displacementRange: string[];
+  transmissionType: string;
+  passengerNo: string;
+  doorNo: number;
+  fuelTypeName: number;
+  licenseType: string;
+  licenseTag: string;
+  pcImgUrl: string;
+  mobileImgUrl: string;
+  modelYear: string;
+  suggestedRetailPrice: number;
+  carLevelGroupList: { groupCode: string; groupName: string }[];
+  vehicleColorList: any[]; // 可细化
+}
+
+// 供应商
+export interface ISupplier {
+  subSuppliers: any[]; // 可细化
+  localPickupSite: boolean;
+  channelCode: string;
+  platformCode: string;
+  merchantId: string;
+  platformEntryType: number;
+  supplierInfo: ISupplierInfo;
+  vehicleInfo: IVehicleInfo;
+  vehicleTerms: any[]; // 可细化
+  cornerTerms?: ICornerTerm[];
+  pickupType: string;
+  dropoffType: string;
+  pickupSiteGuid: string;
+  pickupSiteName: string;
+  dropoffSiteGuid: string;
+  goodsId: string;
+  straightLineDistance: string;
+  pickupStraightLineDistance: string;
+  dropoffStraightLineDistance: string;
+  originTotalPrice: number;
+  totalPrice: number;
+  promoCardPlan: boolean;
+  supplierTotalPrice: number;
+  dailyPrice: number;
+  originDailyPrice: number;
+  rentalAmount: number;
+  insuranceFeeAmount: number;
+  serviceFeeAmount: number;
+  hitch: boolean;
+  helloPriceKey: string;
+  algorithmPriceKey: string;
+  siteCommentScore: number; // 门店评分
+  termCodeList: string[];
+  hasStock: boolean;
+  goodsGroupIds: number[];
+  timeShare: boolean;
+  showRemand: boolean;
+  superSpecialCarLowStock: boolean;
+  newCardAllDays: number;
+  chooseCarShowFlag: boolean;
+  inquiryDesc: object;
+  quoteServiceType: number;
+  nonLocalDeliverRate: boolean;
+}
+
+// 主体类型
+export interface IVehicleDetail {
+  suppliers: ISupplier[];
+  requestId: string;
 }
