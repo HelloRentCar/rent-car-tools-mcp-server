@@ -4,8 +4,8 @@ import { IVehicleDetail } from "../../types/searchPage.js";
 
 /** 用户查询具体车辆的全部供应商报价数据工具 */
 export const VEHICLEMOREPRICELISTV3_TOOL = {
-  name: "vehicle_more_price_list_v3",
-  description: "查询具体车辆的全部供应商报价数据",
+  name: "rent_vehicle_more_price_list_v3",
+  description: "依赖 rent_car_search_carList_page_v3 工具中返回的车辆列表数据，获取特定车辆的详细价格信息，包含不同供应商的价格对比和门店评分等信息",
   inputSchema: {
     type: "object",
     properties: {
@@ -104,7 +104,7 @@ export async function handleVehicleMorePriceListV3(pickupRentalInfo: any, dropof
   });
   const fullData: ResponseResult<IVehicleDetail> = await response.json();
   if (+fullData?.code === 0) {
-    return {
+    const result = {
       content: [{
         type: "text",
         text: `数据处理中...`,
@@ -132,6 +132,13 @@ export async function handleVehicleMorePriceListV3(pickupRentalInfo: any, dropof
       }],
       isError: false
     };
+    result.content.push({
+      type: "text",
+      text: `该车型下更多供应商报价查询识别: ${JSON.stringify(result?.content?.[0]?.data || [])}`,
+      requestId: result?.content?.[0]?.requestId || '',
+      data: [],
+    });
+    return result;
   }
   return {
     content: [{

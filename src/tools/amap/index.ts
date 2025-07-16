@@ -1,8 +1,8 @@
-const getApiKey = () => {
+export const getApiKey = () => {
   const apiKey = process.env.AMAP_MAPS_API_KEY;
   return apiKey ?? '';
 }
-const getApiKeyValidate = (apiKey: string) => {
+export const getApiKeyValidate = (apiKey: string) => {
   if (!apiKey) {
     // console.error("AMAP_MAPS_API_KEY environment variable is not set");
     // process.exit(1);
@@ -18,7 +18,7 @@ const getApiKeyValidate = (apiKey: string) => {
     isError: false
   }
 }
-const AMAP_MAPS_API_KEY = getApiKey();
+export const AMAP_MAPS_API_KEY = getApiKey();
 const REGEOCODE_TOOL = {
   name: "maps_regeocode",
   description: "将一个经纬度坐标转换为行政区划地址信息",

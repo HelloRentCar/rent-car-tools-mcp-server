@@ -7,8 +7,8 @@ import { ICarInfo } from "../../types/searchPage.js";
  * 查询车辆列表工具
  */
 export const SEARCHCARLISTV3_TOOL = {
-  name: "search_carList_page_v3",
-  description: "用户根据未来的取车时间和还车时间和地点查询可预约车辆商品和价格数据。",
+  name: "rent_car_search_carList_page_v3",
+  description: "首先调用该工具！！拿到返回的vehicleDisplayGroupId，才能使用其他工具！！根据取还车时间和地点查询可用车辆，支持品牌、类型等筛选条件，返回所有合适的车辆列表和价格信息",
   inputSchema: {
     type: "object",
     properties: {
