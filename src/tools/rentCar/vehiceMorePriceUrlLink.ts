@@ -1,7 +1,8 @@
 import { toTimestamp } from "../../common/index.js";
-import { ResponseResult } from "../../types/index.js";
+// import { ResponseResult } from "../../types/index.js";
 import { getFetch } from "../../common/index.js";
 import QRCode from 'qrcode';
+import { ResponseResult } from "../../types/index.js";
 
 /**
  * 生成以二维码图片形式的报价页面URL便于用户扫码操作
@@ -87,7 +88,7 @@ export const MORE_PRICE_URL_LINK_TOOL = {
         description: "聚合组ID"
       },
     },
-    required: ["pickupRentalInfo", "dropoffRentalInfo", "vehicleDisplayGroupId"]
+    required: ["pickupRentalInfo", "dropoffRentalInfo"]
   }
 }
 
@@ -99,55 +100,69 @@ export const MORE_PRICE_URL_LINK_TOOL = {
  * @returns 
  */
 export async function handleCarMorePriceLink(pickupRentalInfo: any, dropoffRentalInfo: any, vehicleDisplayGroupId: string) {
-  // const fetch = await getFetch();
+  const fetch = await getFetch();
   const paramsTimestamp = Date.now(); // 当前时间戳
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr) || '';
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr) || '';
   try {
     // &bizBackCityCode=${dropoffRentalInfo?.cityCode}&bizBackCityName=${dropoffRentalInfo?.cityName}&bizBackLocationName=${dropoffRentalInfo?.locationName}&bizBackLatitude=${dropoffRentalInfo?.latitude}&bizBackLongitude=${dropoffRentalInfo?.longitude}&bizBackAdCode=${dropoffRentalInfo?.adCode}
-    const shortUrl = `https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=${vehicleDisplayGroupId}&bizCityCode=${pickupRentalInfo?.cityCode}&bizCityName=${pickupRentalInfo?.cityName}&bizLocationName=${pickupRentalInfo?.locationName}&bizLatitude=${pickupRentalInfo?.latitude}&bizLongitude=${pickupRentalInfo?.longitude}&bizAdCode=${pickupRentalInfo?.adCode}&startDatetime=${pickupDatetime}&endDatetime=${dropoffDatetime}&paramsTimestamp=${paramsTimestamp}`;
-    // const response = await fetch('https://crm-api.hellobike.cn/CRM/common/getShortUrl', {
-    //   method: "POST",
-    //   body: JSON.stringify({
-    //     targetUrl: 'https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=7282590291568427011&bizCityCode=028&bizCityName=成都市&bizLocationName=成都东站&bizLatitude=30.630574&bizLongitude=104.149276&bizAdCode=510112&startDatetime=1752919200000&endDatetime=1753063200000&paramsTimestamp=1752748153321',
-    //   }),
-    //   headers: {
-    //     'token': 'bearer_069d8537-9a8c-4e9c-88c6-c0e41ef18dd6',
-    //     "Content-Type": "application/json"
-    //   }
-    // });
-    // const fullData: ResponseResult<{ shortUrl: string }> = await response.json();
-    // const shortUrl = fullData.data?.shortUrl || '';
+    // const shortUrl = `https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=${vehicleDisplayGroupId}&bizCityCode=${pickupRentalInfo?.cityCode}&bizCityName=${pickupRentalInfo?.cityName}&bizLocationName=${pickupRentalInfo?.locationName}&bizLatitude=${pickupRentalInfo?.latitude}&bizLongitude=${pickupRentalInfo?.longitude}&bizAdCode=${pickupRentalInfo?.adCode}&startDatetime=${pickupDatetime}&endDatetime=${dropoffDatetime}&paramsTimestamp=${paramsTimestamp}`;
+    const response = await fetch('https://rentfe-api.hellobike.com/rent/wechat/miniprogram/shortlink', {
+      method: "POST",
+      body: JSON.stringify({
+        path: 'subPackages/morePrice/index',
+        // env_version: 'trial',
+        query: {
+          vehicleDisplayGroupId: vehicleDisplayGroupId || '7282590291568427011',
+          bizCityCode: pickupRentalInfo?.cityCode,
+          bizCityName: pickupRentalInfo?.cityName,
+          bizLocationName: pickupRentalInfo?.locationName,
+          bizLatitude: pickupRentalInfo?.latitude,
+          bizLongitude: pickupRentalInfo?.longitude,
+          bizAdCode: pickupRentalInfo?.adCode,
+          startDatetime: pickupDatetime,
+          endDatetime: dropoffDatetime,
+          paramsTimestamp,
+        }
+      }),
+      headers: {
+        'token': 'bearer_069d8537-9a8c-4e9c-88c6-c0e41ef18dd6',
+        "Content-Type": "application/json"
+      }
+    });
+    const fullData: ResponseResult<string> = await response.json();
+    const shortUrl = fullData?.data || '';
     if (shortUrl) {
       const curQrCode = await QRCode.toDataURL(shortUrl) || '';
-      const base64Data = curQrCode?.split(',')?.[1] || '';
-      if (base64Data) {
-        return {
-          content: [{
+      const base64Data = curQrCode?.split(',')?.[1];
+      // if (base64Data) {
+      return {
+        content: [
+          {
             type: "image",
             data: base64Data,
             mimeType: 'image/png'
           },
           {
             type: "text",
-            text: `下单链接: ${shortUrl}`,
+            text: `下单链接: ${base64Data}`,
           }
-          ],
-          isError: false
-        };
-      }
-      return {
-        content: [{
-          type: "text",
-          text: `无二维码数据`
-        }],
+        ],
         isError: false
       };
+      // }
+      // return {
+      //   content: [{
+      //     type: "text",
+      //     text: `无二维码数据q`
+      //   }],
+      //   isError: false
+      // };
     }
     return {
       content: [{
         type: "text",
-        text: `无二维码数据`
+        text: `无二维码数据${fullData?.code}`
       }],
       isError: false
     };
