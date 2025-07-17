@@ -1,8 +1,5 @@
 import { toTimestamp } from "../../common/index.js";
-// import { ResponseResult } from "../../types/index.js";
-import { getFetch } from "../../common/index.js";
 import QRCode from 'qrcode';
-import { ResponseResult } from "../../types/index.js";
 
 /**
  * 生成以二维码图片形式的报价页面URL便于用户扫码操作
@@ -100,69 +97,36 @@ export const MORE_PRICE_URL_LINK_TOOL = {
  * @returns 
  */
 export async function handleCarMorePriceLink(pickupRentalInfo: any, dropoffRentalInfo: any, vehicleDisplayGroupId: string) {
-  const fetch = await getFetch();
   const paramsTimestamp = Date.now(); // 当前时间戳
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr) || '';
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr) || '';
   try {
     // &bizBackCityCode=${dropoffRentalInfo?.cityCode}&bizBackCityName=${dropoffRentalInfo?.cityName}&bizBackLocationName=${dropoffRentalInfo?.locationName}&bizBackLatitude=${dropoffRentalInfo?.latitude}&bizBackLongitude=${dropoffRentalInfo?.longitude}&bizBackAdCode=${dropoffRentalInfo?.adCode}
-    // const shortUrl = `https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=${vehicleDisplayGroupId}&bizCityCode=${pickupRentalInfo?.cityCode}&bizCityName=${pickupRentalInfo?.cityName}&bizLocationName=${pickupRentalInfo?.locationName}&bizLatitude=${pickupRentalInfo?.latitude}&bizLongitude=${pickupRentalInfo?.longitude}&bizAdCode=${pickupRentalInfo?.adCode}&startDatetime=${pickupDatetime}&endDatetime=${dropoffDatetime}&paramsTimestamp=${paramsTimestamp}`;
-    const response = await fetch('https://rentfe-api.hellobike.com/rent/wechat/miniprogram/shortlink', {
-      method: "POST",
-      body: JSON.stringify({
-        path: 'subPackages/morePrice/index',
-        // env_version: 'trial',
-        query: {
-          vehicleDisplayGroupId: vehicleDisplayGroupId || '7282590291568427011',
-          bizCityCode: pickupRentalInfo?.cityCode,
-          bizCityName: pickupRentalInfo?.cityName,
-          bizLocationName: pickupRentalInfo?.locationName,
-          bizLatitude: pickupRentalInfo?.latitude,
-          bizLongitude: pickupRentalInfo?.longitude,
-          bizAdCode: pickupRentalInfo?.adCode,
-          startDatetime: pickupDatetime,
-          endDatetime: dropoffDatetime,
-          paramsTimestamp,
-        }
-      }),
-      headers: {
-        'token': 'bearer_069d8537-9a8c-4e9c-88c6-c0e41ef18dd6',
-        "Content-Type": "application/json"
-      }
-    });
-    const fullData: ResponseResult<string> = await response.json();
-    const shortUrl = fullData?.data || '';
-    if (shortUrl) {
-      const curQrCode = await QRCode.toDataURL(shortUrl) || '';
-      const base64Data = curQrCode?.split(',')?.[1];
-      // if (base64Data) {
+    const shortUrl = `https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=${vehicleDisplayGroupId || '7282590291568427011'}&bizCityCode=${pickupRentalInfo?.cityCode}&bizCityName=${pickupRentalInfo?.cityName}&bizLocationName=${pickupRentalInfo?.locationName}&bizLatitude=${pickupRentalInfo?.latitude}&bizLongitude=${pickupRentalInfo?.longitude}&bizAdCode=${pickupRentalInfo?.adCode}&startDatetime=${pickupDatetime}&endDatetime=${dropoffDatetime}&paramsTimestamp=${paramsTimestamp}`;
+    // const shortUrl = 'https://example.com';
+    const curQrCode = await QRCode.toDataURL(shortUrl) || '';
+    const base64Data = curQrCode?.split(',')?.[1] || '';
+    if (base64Data) {
       return {
         content: [
           {
             type: "image",
-            data: base64Data,
-            mimeType: 'image/png'
+            // 这里直接用 data:image/png;base64,xxx
+            mimeType: "image/png",
+            data: base64Data || '',
           },
           {
             type: "text",
-            text: `下单链接: ${base64Data}`,
+            text: `下单链接: ${shortUrl}`,
           }
         ],
         isError: false
       };
-      // }
-      // return {
-      //   content: [{
-      //     type: "text",
-      //     text: `无二维码数据q`
-      //   }],
-      //   isError: false
-      // };
     }
     return {
       content: [{
         type: "text",
-        text: `无二维码数据${fullData?.code}`
+        text: `无二维码数据${shortUrl}`
       }],
       isError: false
     };
