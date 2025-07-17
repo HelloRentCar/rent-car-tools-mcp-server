@@ -82,10 +82,10 @@ export const MORE_PRICE_URL_LINK_TOOL = {
       },
       vehicleDisplayGroupId: {
         type: "string",
-        description: "聚合组ID"
+        description: "聚合组ID，来源于 MCP工具 search_carList_page_v3 接口返回的车辆数据中vehicles字段中的vehicleDisplayGroupId, 类似数字的字符串"
       },
     },
-    required: ["pickupRentalInfo", "dropoffRentalInfo"]
+    required: ["pickupRentalInfo", "dropoffRentalInfo", "vehicleDisplayGroupId"]
   }
 }
 
@@ -100,44 +100,14 @@ export async function handleCarMorePriceLink(pickupRentalInfo: any, dropoffRenta
   const paramsTimestamp = Date.now(); // 当前时间戳
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr) || '';
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr) || '';
-  try {
-    // &bizBackCityCode=${dropoffRentalInfo?.cityCode}&bizBackCityName=${dropoffRentalInfo?.cityName}&bizBackLocationName=${dropoffRentalInfo?.locationName}&bizBackLatitude=${dropoffRentalInfo?.latitude}&bizBackLongitude=${dropoffRentalInfo?.longitude}&bizBackAdCode=${dropoffRentalInfo?.adCode}
-    const shortUrl = `https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=${vehicleDisplayGroupId || '7282590291568427011'}&bizCityCode=${pickupRentalInfo?.cityCode}&bizCityName=${pickupRentalInfo?.cityName}&bizLocationName=${pickupRentalInfo?.locationName}&bizLatitude=${pickupRentalInfo?.latitude}&bizLongitude=${pickupRentalInfo?.longitude}&bizAdCode=${pickupRentalInfo?.adCode}&startDatetime=${pickupDatetime}&endDatetime=${dropoffDatetime}&paramsTimestamp=${paramsTimestamp}`;
-    // const shortUrl = 'https://example.com';
-    const curQrCode = await QRCode.toDataURL(shortUrl) || '';
-    const base64Data = curQrCode?.split(',')?.[1] || '';
-    if (base64Data) {
-      return {
-        content: [
-          {
-            type: "image",
-            // 这里直接用 data:image/png;base64,xxx
-            mimeType: "image/png",
-            data: base64Data || '',
-          },
-          {
-            type: "text",
-            text: `下单链接: ${shortUrl}`,
-          }
-        ],
-        isError: false
-      };
-    }
-    return {
-      content: [{
+  const shortUrl = `https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=${vehicleDisplayGroupId}&bizCityCode=${pickupRentalInfo?.cityCode}&bizCityName=${pickupRentalInfo?.cityName}&bizLocationName=${pickupRentalInfo?.locationName}&bizLatitude=${pickupRentalInfo?.latitude}&bizLongitude=${pickupRentalInfo?.longitude}&bizAdCode=${pickupRentalInfo?.adCode}&startDatetime=${pickupDatetime}&endDatetime=${dropoffDatetime}&paramsTimestamp=${paramsTimestamp}`;
+  return {
+    content: [
+      {
         type: "text",
-        text: `无二维码数据${shortUrl}`
-      }],
-      isError: false
-    };
-  } catch (e) {
-    console.error('QRCode error', e);
-    return {
-      content: [{
-        type: "text",
-        text: `二维码生成失败: ${e instanceof Error ? e.message : String(e)}`
-      }],
-      isError: true
-    };
-  }
+        text: `下单链接: https://api.cl2wm.cn/api/qrcode/code?text=${encodeURIComponent(shortUrl)}`,
+      }
+    ],
+    isError: false
+  };
 }

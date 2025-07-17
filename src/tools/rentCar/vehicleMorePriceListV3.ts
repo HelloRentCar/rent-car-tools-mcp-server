@@ -57,12 +57,12 @@ export const VEHICLEMOREPRICELISTV3_TOOL = {
         required: ["latitude", "longitude", "cityCode", "dateStr"]
       },
       groupCode: {
-        type: "string",
-        description: "车型分组code",
+        type: "number",
+        description: "分组code，来源于 MCP工具 search_carList_page_v3 接口返回的车辆数据中vehicles字段中的groupCode, 如: '5'"
       },
       vehicleDisplayGroupId: {
         type: "string",
-        description: "聚合组ID"
+        description: "聚合组ID，来源于 MCP工具 search_carList_page_v3 接口返回的车辆数据中vehicles字段中的vehicleDisplayGroupId, 类似数字的字符串"
       },
     },
     required: ["pickupRentalInfo", "dropoffRentalInfo", "groupCode", "vehicleDisplayGroupId"]
