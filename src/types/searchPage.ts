@@ -38,7 +38,6 @@ interface IMinPriceSupplier {
 	timeShare?:boolean;                  // 是否分时报价
 	subsidyType?: number;                // 0 -- 无， 1-- 打车补贴
 	freeSendCarDoorFeeAmount?:number;    // 送车费减免
-	superSpecialCarLowStock?:boolean;    // 特价车低库存标识
 	newCardGoodsGroupIds?:string[];      // 仅限新套餐卡专区 SceneCode=13 该车辆在列表匹配后的活动群组 通过列表和浮层传给前端，前端在详情和提单页传回来
 }
 
@@ -194,7 +193,6 @@ export interface ISupplier {
   goodsGroupIds: number[];
   timeShare: boolean;
   showRemand: boolean;
-  superSpecialCarLowStock: boolean;
   newCardAllDays: number;
   chooseCarShowFlag: boolean;
   inquiryDesc: object;

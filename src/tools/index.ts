@@ -2,7 +2,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { insertVehicles } from './sqlite.js';
 import { handleSearchListV3, SEARCHCARLISTV3_TOOL } from './rentCar/searchCarListPageV3.js';
-import { handleOrderUrlLink, MORE_PRICE_URL_LINK_TOOL } from './rentCar/vehiceMorePriceUrlLink.js';
+import { handleCarMorePriceLink, MORE_PRICE_URL_LINK_TOOL } from './rentCar/vehiceMorePriceUrlLink.js';
 import { handleVehicleMorePriceListV3, VEHICLEMOREPRICELISTV3_TOOL } from './rentCar/vehicleMorePriceListV3.js';
 
 // import * as eventsTool from './events.js';
@@ -30,40 +30,35 @@ export function registerRentCarsTool(server: Server) {
   server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     try {
       switch (request.params.name) {
-        case "rent_car_more_price_link": {
-          const { pickupRentalInfo, dropoffRentalInfo, vehicleDisplayGroupId } = request.params.arguments;
-          return await handleOrderUrlLink(pickupRentalInfo, dropoffRentalInfo, vehicleDisplayGroupId);
-        }
-        case "rent_car_search_carList_page_v3": {
+        case "search_carList_page_v3": {
           const { pickupRentalInfo, dropoffRentalInfo, filter = [] } = request.params.arguments;
           const result = await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo, filter);
           // 将数据写入数据库
           if (!result.isError) {
-            // try {
-            //   await insertVehicles({
-            //     requestId: result?.content?.[0]?.requestId || '',
-            //     vehicles: JSON.stringify({
-            //       requestId: result?.content?.[0]?.requestId || '',
-            //       sessionId: request.sessionId || '',
-            //       // 获取当前会话id
-            //       vehicleList: result?.content?.[0]?.data || [],
-            //     }, null, 2),
-            //   });
-            //   result.content.push({
-            //     type: "text",
-            //     text: `数据已保存到本地数据库`,
-            //     requestId: result?.content?.[0]?.requestId || '',
-            //     data: [],
-            //   });
-            // } catch (err) {
-            //   console.error('写入数据库失败:', err);
-            //   result.content.push({
-            //     type: "text",
-            //     text: `写入数据库失败: ${err instanceof Error ? err.message : String(err)}`,
-            //     requestId: result?.content?.[0]?.requestId || '',
-            //     data: [],
-            //   });
-            // }
+            try {
+              await insertVehicles({
+                requestId: result?.content?.[0]?.requestId || '',
+                vehicles: JSON.stringify({
+                  requestId: result?.content?.[0]?.requestId || '',
+                  sessionId: request.sessionId || '',
+                  // 获取当前会话id
+                  vehicleList: result?.content?.[0]?.data || [],
+                }, null, 2),
+              });
+              result.content.push({
+                type: "text",
+                text: `数据已保存到本地数据库`,
+                requestId: result?.content?.[0]?.requestId || '',
+                data: [],
+              });
+            } catch (err) {
+              result.content.push({
+                type: "text",
+                text: `写入数据库失败: ${err instanceof Error ? err.message : String(err)}`,
+                requestId: result?.content?.[0]?.requestId || '',
+                data: [],
+              });
+            }
             result.content.push({
               type: "text",
               text: `询价成功: ${JSON.stringify(result?.content?.[0]?.data || [])}`,
@@ -73,59 +68,62 @@ export function registerRentCarsTool(server: Server) {
           }
           return result;
         }
-        case "rent_vehicle_more_price_list_v3": {
+        case "car_more_price_link": {
+          const { pickupRentalInfo, dropoffRentalInfo, vehicleDisplayGroupId } = request.params.arguments;
+          return await handleCarMorePriceLink(pickupRentalInfo, dropoffRentalInfo, vehicleDisplayGroupId);
+        }
+        case "vehicle_more_price_list_v3": {
           const { pickupRentalInfo, dropoffRentalInfo, groupCode, vehicleDisplayGroupId } = request.params.arguments;
           return await handleVehicleMorePriceListV3(pickupRentalInfo, dropoffRentalInfo, groupCode, vehicleDisplayGroupId);
         }
-
-        // case "maps_regeocode": {
-        //   const { location } = request.params.arguments;
-        //   return await AmapTool.handleReGeocode(location);
-        // }
-        // case "maps_geo": {
-        //   const { address, city } = request.params.arguments;
-        //   return await AmapTool.handleGeo(address, city);
-        // }
-        // case "maps_ip_location": {
-        //   const { ip } = request.params.arguments;
-        //   return await AmapTool.handleIPLocation(ip);
-        // }
-        // case "maps_weather": {
-        //   const { city } = request.params.arguments;
-        //   return await AmapTool.handleWeather(city);
-        // }
-        // case "maps_search_detail": {
-        //   const { id } = request.params.arguments;
-        //   return await AmapTool.handleSearchDetail(id);
-        // }
-        // case "maps_bicycling": {
-        //   const { origin, destination } = request.params.arguments;
-        //   return await AmapTool.handleBicycling(origin, destination);
-        // }
-        // case "maps_direction_walking": {
-        //   const { origin, destination } = request.params.arguments;
-        //   return await AmapTool.handleWalking(origin, destination);
-        // }
-        // case "maps_direction_driving": {
-        //   const { origin, destination } = request.params.arguments;
-        //   return await AmapTool.handleDriving(origin, destination);
-        // }
-        // case "maps_direction_transit_integrated": {
-        //   const { origin, destination, city, cityd } = request.params.arguments;
-        //   return await AmapTool.handleTransitIntegrated(origin, destination, city, cityd);
-        // }
-        // case "maps_distance": {
-        //   const { origins, destination, type } = request.params.arguments;
-        //   return await AmapTool.handleDistance(origins, destination, type);
-        // }
-        // case "maps_text_search": {
-        //   const { keywords, city, citylimit } = request.params.arguments;
-        //   return await AmapTool.handleTextSearch(keywords, city, citylimit);
-        // }
-        // case "maps_around_search": {
-        //   const { location, radius, keywords } = request.params.arguments;
-        //   return await AmapTool.handleAroundSearch(location, radius, keywords);
-        // }
+        case "maps_regeocode": {
+          const { location } = request.params.arguments;
+          return await AmapTool.handleReGeocode(location);
+        }
+        case "maps_geo": {
+          const { address, city } = request.params.arguments;
+          return await AmapTool.handleGeo(address, city);
+        }
+        case "maps_ip_location": {
+          const { ip } = request.params.arguments;
+          return await AmapTool.handleIPLocation(ip);
+        }
+        case "maps_weather": {
+          const { city } = request.params.arguments;
+          return await AmapTool.handleWeather(city);
+        }
+        case "maps_search_detail": {
+          const { id } = request.params.arguments;
+          return await AmapTool.handleSearchDetail(id);
+        }
+        case "maps_bicycling": {
+          const { origin, destination } = request.params.arguments;
+          return await AmapTool.handleBicycling(origin, destination);
+        }
+        case "maps_direction_walking": {
+          const { origin, destination } = request.params.arguments;
+          return await AmapTool.handleWalking(origin, destination);
+        }
+        case "maps_direction_driving": {
+          const { origin, destination } = request.params.arguments;
+          return await AmapTool.handleDriving(origin, destination);
+        }
+        case "maps_direction_transit_integrated": {
+          const { origin, destination, city, cityd } = request.params.arguments;
+          return await AmapTool.handleTransitIntegrated(origin, destination, city, cityd);
+        }
+        case "maps_distance": {
+          const { origins, destination, type } = request.params.arguments;
+          return await AmapTool.handleDistance(origins, destination, type);
+        }
+        case "maps_text_search": {
+          const { keywords, city, citylimit } = request.params.arguments;
+          return await AmapTool.handleTextSearch(keywords, city, citylimit);
+        }
+        case "maps_around_search": {
+          const { location, radius, keywords } = request.params.arguments;
+          return await AmapTool.handleAroundSearch(location, radius, keywords);
+        }
         // case "search_events": {
         //   return { content: [{ type: "json", data: await eventsTool.searchEvents(request.params.arguments) }], isError: false };
         // }

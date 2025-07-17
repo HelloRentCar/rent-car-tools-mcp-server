@@ -8,7 +8,7 @@ export async function insertVehicles(vehicles: VehicleData): Promise<void> {
 
   try {
     await database.insertVehicles(vehicles);
-    console.log(`成功插入车辆数据: ${vehicles.requestId}`);
+    // console.log(`成功插入车辆数据: ${vehicles.requestId}`);
   } catch (error) {
     console.error('插入车辆数据失败:', error);
     throw error;

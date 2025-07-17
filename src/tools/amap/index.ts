@@ -1,3 +1,6 @@
+import { getFetch } from "../../common/index.js";
+const fetch = await getFetch();
+
 export const getApiKey = () => {
   const apiKey = process.env.AMAP_MAPS_API_KEY;
   return apiKey ?? '';

@@ -1,11 +1,12 @@
 import { getFetch } from "../../common/index.js";
+import { toTimestamp } from "../../common/index.js";
 import { ResponseResult } from "../../types/index.js";
 import { IVehicleDetail } from "../../types/searchPage.js";
 
 /** 用户查询具体车辆的全部供应商报价数据工具 */
 export const VEHICLEMOREPRICELISTV3_TOOL = {
-  name: "rent_vehicle_more_price_list_v3",
-  description: "依赖 rent_car_search_carList_page_v3 工具中返回的车辆列表数据，获取特定车辆的详细价格信息，包含不同供应商的价格对比和门店评分等信息",
+  name: "vehicle_more_price_list_v3",
+  description: "依赖 search_carList_page_v3 工具中返回的车辆列表数据，获取特定车辆的详细价格信息，包含不同供应商的价格对比和门店评分等信息",
   inputSchema: {
     type: "object",
     properties: {
@@ -25,12 +26,12 @@ export const VEHICLEMOREPRICELISTV3_TOOL = {
             type: "string",
             description: "取车城市区号, 如: 021"
           },
-          datetime: {
-            type: "number",
-            description: "取车时间戳，单位精确到毫秒（注意：每次都要通过date +%s获取当前时间戳进行比对，输入的时间应大于当前系统时间，如果没有年份信息默认为2025年）"
-          }
+          dateStr: {
+            type: "string",
+            description: "取车日期, 如: 2025年07月20日 10:00, 如果没有年份信息默认为2025年, 取车时间大于当前时间"
+          },
         },
-        required: ["latitude", "longitude", "cityCode", "datetime"]
+        required: ["latitude", "longitude", "cityCode", "dateStr"]
       },
       dropoffRentalInfo: {
         type: "object",
@@ -48,12 +49,12 @@ export const VEHICLEMOREPRICELISTV3_TOOL = {
             type: "string",
             description: "还车城市区号, 如: 上海市为021"
           },
-          datetime: {
-            type: "number",
-            description: "还车时间戳，单位精确到毫秒（注意：每次都要通过date +%s获取当前时间戳进行比对，输入的时间应大于当前系统时间，如果没有年份信息默认为2025年）"
-          }
+          dateStr: {
+            type: "string",
+            description: "还车日期, 如: 2025年07月20日 10:00, 如果没有年份信息默认为2025年, 还车时间大于取车时间"
+          },
         },
-        required: ["datetime", "latitude", "longitude", "cityCode"]
+        required: ["latitude", "longitude", "cityCode", "dateStr"]
       },
       groupCode: {
         type: "string",
@@ -77,19 +78,23 @@ export const VEHICLEMOREPRICELISTV3_TOOL = {
  */
 export async function handleVehicleMorePriceListV3(pickupRentalInfo: any, dropoffRentalInfo: any, groupCode: string, vehicleDisplayGroupId: string) {
   const fetch = await getFetch();
+  const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
+  const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr);
   const reqJson = {
     "action": "vehicle.more.price.list.v3",
     "pickupRentalInfo": {
-      "cityCode": pickupRentalInfo?.cityCode || '021',
-      "latitude": pickupRentalInfo?.latitude || '31.23136',
-      "longitude": pickupRentalInfo?.longitude || '121.47004',
-      "datetime": pickupRentalInfo?.datetime
+      "cityCode": pickupRentalInfo?.cityCode,
+      "latitude": pickupRentalInfo?.latitude,
+      "longitude": pickupRentalInfo?.longitude,
+      "dateStr": pickupRentalInfo?.dateStr,
+      "datetime": pickupDatetime
     },
     "dropoffRentalInfo": {
-      "cityCode": dropoffRentalInfo?.cityCode || pickupRentalInfo?.cityCode || '021',
-      "latitude": dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude || '31.23136',
-      "longitude": dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude || '121.47004',
-      "datetime": dropoffRentalInfo?.datetime
+      "cityCode": dropoffRentalInfo?.cityCode || pickupRentalInfo?.cityCode,
+      "latitude": dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude,
+      "longitude": dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude,
+      "dateStr": dropoffRentalInfo?.dateStr,
+      "datetime": dropoffDatetime
     },
     "skip": 0,
     "groupCode": groupCode,

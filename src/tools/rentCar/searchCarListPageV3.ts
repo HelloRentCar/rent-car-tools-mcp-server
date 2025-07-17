@@ -1,13 +1,13 @@
-import { z } from "zod";
 import { getFetch } from "../../common/index.js";
 import { ResponseResult } from "../../types/index.js";
 import { ICarInfo } from "../../types/searchPage.js";
+import { toTimestamp } from "../../common/index.js";
 
 /**
  * 查询车辆列表工具
  */
 export const SEARCHCARLISTV3_TOOL = {
-  name: "rent_car_search_carList_page_v3",
+  name: "search_carList_page_v3",
   description: "首先调用该工具！！拿到返回的vehicleDisplayGroupId，才能使用其他工具！！根据取还车时间和地点查询可用车辆，支持品牌、类型等筛选条件，返回所有合适的车辆列表和价格信息",
   inputSchema: {
     type: "object",
@@ -20,7 +20,7 @@ export const SEARCHCARLISTV3_TOOL = {
           properties: {
             code: {
               type: "string",
-              description: "筛选项编码，例如 '别克'、'保时捷'"
+              description: "筛选项名称，code与name值相同！！，例如 '别克'、'保时捷'"
             },
             name: {
               type: "string",
@@ -43,7 +43,6 @@ export const SEARCHCARLISTV3_TOOL = {
               description: "筛选方式，如 'drop' 表示下拉选择，默认值是'drop'"
             }
           },
-          // required: ["code", "name", "type", "disabled", "commonFilter", "checkType"]
         }
       },
       pickupRentalInfo: {
@@ -62,12 +61,12 @@ export const SEARCHCARLISTV3_TOOL = {
             type: "string",
             description: "取车城市区号, 如: 021"
           },
-          datetime: {
-            type: "number",
-            description: "取车时间戳，单位精确到毫秒（注意：每次都要通过date +%s获取当前时间戳进行比对，输入的时间应大于当前系统时间，如果没有年份信息默认为2025年）"
-          }
+          dateStr: {
+            type: "string",
+            description: "取车日期, 如: 2025年07月20日 10:00, 如果没有年份信息默认为2025年, 取车时间大于当前时间"
+          },
         },
-        required: ["latitude", "longitude", "cityCode", "datetime"]
+        required: ["latitude", "longitude", "cityCode", "dateStr"]
       },
       dropoffRentalInfo: {
         type: "object",
@@ -85,14 +84,15 @@ export const SEARCHCARLISTV3_TOOL = {
             type: "string",
             description: "还车城市区号, 如: 上海市为021"
           },
-          datetime: {
-            type: "number",
-            description: "还车时间戳，单位精确到毫秒（注意：每次都要通过date +%s获取当前时间戳进行比对，输入的时间应大于当前系统时间，如果没有年份信息默认为2025年）"
-          }
+          dateStr: {
+            type: "string",
+            description: "还车日期, 如: 2025年07月20日 10:00, 如果没有年份信息默认为2025年, 还车时间大于取车时间"
+          },
         },
-        required: ["datetime", "latitude", "longitude", "cityCode"]
+        required: ["latitude", "longitude", "cityCode", "dateStr"]
       }
     },
+    required: ["pickupRentalInfo", "dropoffRentalInfo"]
   },
 };
 
@@ -104,19 +104,24 @@ export const SEARCHCARLISTV3_TOOL = {
  */
 export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any, filter = []) {
   const fetch = await getFetch();
+  // console.log('pickupRentalInfo', pickupRentalInfo);
+  const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
+  const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr);
   const reqJson = {
     "action": "veh.search.page.v3",
     "pickupRentalInfo": {
-      "cityCode": pickupRentalInfo?.cityCode || '021',
-      "latitude": pickupRentalInfo?.latitude || '31.23136',
-      "longitude": pickupRentalInfo?.longitude || '121.47004',
-      "datetime": pickupRentalInfo?.datetime
+      "cityCode": pickupRentalInfo?.cityCode,
+      "latitude": pickupRentalInfo?.latitude,
+      "longitude": pickupRentalInfo?.longitude,
+      "dateStr": pickupRentalInfo?.dateStr,
+      "datetime": pickupDatetime
     },
     "dropoffRentalInfo": {
-      "cityCode": dropoffRentalInfo?.cityCode || pickupRentalInfo?.cityCode || '021',
-      "latitude": dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude || '31.23136',
-      "longitude": dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude || '121.47004',
-      "datetime": dropoffRentalInfo?.datetime
+      "cityCode": dropoffRentalInfo?.cityCode || pickupRentalInfo?.cityCode,
+      "latitude": dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude,
+      "longitude": dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude,
+      "dateStr": dropoffRentalInfo?.dateStr,
+      "datetime": dropoffDatetime
     },
     "filter": filter || [],
     "pageIndex": 1,
@@ -131,44 +136,51 @@ export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInf
   });
   const fullData: ResponseResult<ICarInfo> = await response.json();
 
-  // if (+fullData.code === 0) {
-  // const filteredVehicles = fullData?.data?.vehicles?.map((vehicle) => ({
-  //   vehicleTotalNum: vehicle?.vehicleTotalNum,
-  //   minPriceSupplier: vehicle?.minPriceSupplier,
-  //   vehicleDisplayGroupId: vehicle?.vehicleDisplayGroupId,
-  //   brandName: vehicle?.brandName,
-  //   transmissionType: vehicle?.transmissionType,
-  //   transmissionName: vehicle?.transmissionName,
-  //   fuelTypeName: vehicle?.fuelTypeName,
-  //   licenseType: vehicle?.licenseType,
-  //   licenseTag: vehicle?.licenseTag,
-  //   shoppingGuideMsg: vehicle?.shoppingGuideMsg,
-  //   locationSourceType: vehicle?.locationSourceType,
-  //   enterpriseInfo: vehicle?.enterpriseInfo,
-  // })) || [];
-  // console.log('filteredVehicles...', filteredVehicles);
-  // return {
-  //   code: fullData?.code,
-  //   msg: fullData?.msg,
-  //   data: {
-  //     vehicles: filteredVehicles,
-  //     totalVehicleNum: fullData?.data?.totalVehicleNum || 0,
-  //     requestId: fullData?.data?.requestId || '',
-  //   }
-  // };
-  // return fullData;
   if (+fullData?.code === 0) {
     return {
       content: [{
         type: "text",
         text: `数据处理中...`,
-        data: fullData?.data?.vehicles || [],
-        requestId: fullData?.data?.requestId || '',
+        data: fullData?.data?.vehicles?.map((item: any) => ({
+          vehicleDisplayGroupId: item?.vehicleDisplayGroupId,
+          vehicleDisplayGroupName: item?.vehicleDisplayGroupName,
+          vehicleSeriesName: item?.vehicleSeriesName,
+          vehicleSeriesId: item?.vehicleSeriesId,
+          vehicleModelId: item?.vehicleModelId,
+          vehicleCode: item?.vehicleCode,
+          vehicleName: item?.vehicleName,
+          groupCode: item?.groupCode,
+          groupName: item?.groupName,
+          brandName: item?.brandName,
+          displacement: item?.displacement,
+          passengerNo: item?.passengerNo,
+          transmissionType: item?.transmissionType,
+          doorNo: item?.doorNo,
+          fuelTypeName: item?.fuelTypeName,
+          pcImgUrl: item?.pcImgUrl,
+          mobileImgUrl: item?.mobileImgUrl,
+          modelYear: item?.modelYear,
+          suggestedRetailPrice: item?.suggestedRetailPrice,
+          carLevelGroupList: item?.carLevelGroupList || [],
+          vehicleColorList: item?.vehicleColorList || [],
+          licenseType: item?.licenseType,
+          minPriceSupplier: item?.minPriceSupplier || {},
+          dailyLowestPrice: item?.dailyLowestPrice,
+          lowestTotalPrice: item?.lowestTotalPrice,
+          priceTotalNum: item?.priceTotalNum || {},
+          restNum: item?.restNum,
+          childVehicleList: item?.childVehicleList || [],
+          needShowHelloBrand: item?.needShowHelloBrand,
+          vehicleTerms: item?.vehicleTerms,
+          storeTerms: item?.storeTerms || [],
+          terms: item?.terms || [],
+          vehicleTotalNum: item?.vehicleTotalNum,
+        })) || [],
+        requestId: fullData?.data?.requestId,
       }],
       isError: false
     };
   }
-
   return {
     content: [{
       type: "text",
