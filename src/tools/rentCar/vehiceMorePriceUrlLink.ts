@@ -82,12 +82,12 @@ export const MORE_PRICE_URL_LINK_TOOL = {
         },
         required: ["latitude", "longitude", "adCode", "cityName", "cityCode", "dateStr", "locationName"]
       },
-      // vehicleDisplayGroupId: {
-      //   type: "string",
-      //   description: "聚合组ID"
-      // },
+      vehicleDisplayGroupId: {
+        type: "string",
+        description: "聚合组ID"
+      },
     },
-    required: ["pickupRentalInfo", "dropoffRentalInfo"]
+    required: ["pickupRentalInfo", "dropoffRentalInfo", "vehicleDisplayGroupId"]
   }
 }
 
