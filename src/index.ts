@@ -7,6 +7,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { startServer } from "./server.js";
 import { registerRentCarsTool } from "./tools/index.js";
 import { dbInitializer } from "./database/init.js";
+import { getUbt } from './common/ubt.js';
 
 // 获取当前模块的目录
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +30,9 @@ try {
 // 主函数
 async function main() {
     try {
+        getUbt({
+            pointId: 'mcp_rent_start_all',
+        });
         // 初始化数据库
         console.log('正在初始化数据库...');
         await dbInitializer.initialize();
@@ -51,8 +55,14 @@ async function main() {
 
         // 启动服务
         await startServer(server);
+        getUbt({
+            pointId: 'mcp_rent_start_success',
+        });
 
     } catch (error) {
+        getUbt({
+            pointId: 'mcp_rent_start_error',
+        });
         console.error('服务启动失败:', error);
         process.exit(1);
     }

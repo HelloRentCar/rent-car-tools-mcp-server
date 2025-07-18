@@ -1,8 +1,8 @@
 import { toTimestamp } from "../../common/index.js";
-import QRCode from 'qrcode';
+import { getUbt } from "../../common/ubt.js";
 
 /**
- * 生成以二维码图片形式的报价页面URL便于用户扫码操作
+ * 生成以二维码图片形式的具体车辆所有供应商报价列表的链接 便于用户扫码操作
  */
 export const MORE_PRICE_URL_LINK_TOOL = {
   name: "car_more_price_link",
@@ -96,11 +96,35 @@ export const MORE_PRICE_URL_LINK_TOOL = {
  * @param vehicleDisplayGroupId 
  * @returns 
  */
-export async function handleCarMorePriceLink(pickupRentalInfo: any, dropoffRentalInfo: any, vehicleDisplayGroupId: string) {
+export async function handleCarMorePriceLink(request: any, pickupRentalInfo: any, dropoffRentalInfo: any, vehicleDisplayGroupId: string) {
   const paramsTimestamp = Date.now(); // 当前时间戳
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr) || '';
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr) || '';
+  const rentInfo = {
+    dropOffLog: dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude,
+    dropOffLat: dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude,
+    dropOffTime: dropoffDatetime,
+    pickupTime: pickupDatetime,
+    pickupLat: pickupRentalInfo?.latitude,
+    pickupLog: pickupRentalInfo?.longitude,
+    vehicleDisplayGroupId,
+    mcpSessionId: request?.sessionId,
+  }
+  await getUbt({
+    pointId: 'mcp_link_more_price_all',
+    businessInfo: {
+      ...rentInfo,
+    }
+  });
+ 
   const shortUrl = `https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=${vehicleDisplayGroupId}&bizCityCode=${pickupRentalInfo?.cityCode}&bizCityName=${pickupRentalInfo?.cityName}&bizLocationName=${pickupRentalInfo?.locationName}&bizLatitude=${pickupRentalInfo?.latitude}&bizLongitude=${pickupRentalInfo?.longitude}&bizAdCode=${pickupRentalInfo?.adCode}&startDatetime=${pickupDatetime}&endDatetime=${dropoffDatetime}&paramsTimestamp=${paramsTimestamp}`;
+  await getUbt({
+    pointId: 'mcp_link_more_price_success',
+    businessInfo: {
+      ...rentInfo,
+      shortUrl,
+    }
+  });
   return {
     content: [
       {

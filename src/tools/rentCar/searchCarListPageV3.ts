@@ -2,6 +2,7 @@ import { getFetch } from "../../common/index.js";
 import { ResponseResult } from "../../types/index.js";
 import { ICarInfo } from "../../types/searchPage.js";
 import { toTimestamp } from "../../common/index.js";
+import { getUbt } from "../../common/ubt.js";
 
 /**
  * 查询车辆列表工具
@@ -102,7 +103,7 @@ export const SEARCHCARLISTV3_TOOL = {
  * @param dropoffRentalInfo 还车信息
  * @returns 车辆列表
  */
-export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any, filter = []) {
+export async function handleSearchListV3(request: any, pickupRentalInfo: any, dropoffRentalInfo: any, filter = []) {
   const fetch = await getFetch();
   // console.log('pickupRentalInfo', pickupRentalInfo);
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
@@ -127,6 +128,21 @@ export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInf
     "pageIndex": 1,
     "pageSize": 40,
   }
+  const rentInfo = {
+    filter: JSON.stringify(filter),
+    dropOffLog: dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude,
+    dropOffLat: dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude,
+    dropOffTime: dropoffDatetime,
+    pickupTime: pickupDatetime,
+    pickupLat: pickupRentalInfo?.latitude,
+    mcpSessionId: request?.sessionId,
+  }
+  await getUbt({
+    pointId: 'mcp_carList_page_v3_all',
+    businessInfo: {
+      ...rentInfo
+    }
+  });
   const response = await fetch('https://a.hellobike.com/rent/api?veh.search.page.v3', {
     method: "POST",
     body: JSON.stringify(reqJson),
@@ -137,6 +153,13 @@ export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInf
   const fullData: ResponseResult<ICarInfo> = await response.json();
 
   if (+fullData?.code === 0) {
+    await getUbt({
+      pointId: 'mcp_carList_v3_success',
+      businessInfo: {
+        ...rentInfo,
+        requestId: fullData?.data?.requestId,
+      }
+    });
     return {
       content: [{
         type: "text",
@@ -181,6 +204,14 @@ export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInf
       isError: false
     };
   }
+  await getUbt({
+    pointId: 'mcp_carList_v3_error',
+    businessInfo: {
+      ...rentInfo,
+      requestId: fullData?.data?.requestId,
+      errorMsg: fullData?.msg,
+    }
+  });
   return {
     content: [{
       type: "text",

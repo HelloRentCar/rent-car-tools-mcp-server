@@ -1,5 +1,6 @@
 import { getFetch } from "../../common/index.js";
 import { toTimestamp } from "../../common/index.js";
+import { getUbt } from "../../common/ubt.js";
 import { ResponseResult } from "../../types/index.js";
 import { IVehicleDetail } from "../../types/searchPage.js";
 
@@ -76,7 +77,7 @@ export const VEHICLEMOREPRICELISTV3_TOOL = {
  * @param groupCode 车型分组code
  * @param vehicleDisplayGroupId 聚合组ID
  */
-export async function handleVehicleMorePriceListV3(pickupRentalInfo: any, dropoffRentalInfo: any, groupCode: string, vehicleDisplayGroupId: string) {
+export async function handleVehicleMorePriceListV3(request: any, pickupRentalInfo: any, dropoffRentalInfo: any, groupCode: string, vehicleDisplayGroupId: string) {
   const fetch = await getFetch();
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr);
@@ -107,8 +108,33 @@ export async function handleVehicleMorePriceListV3(pickupRentalInfo: any, dropof
       "Content-Type": "application/json"
     }
   });
+
+  const rentInfo = {
+    dropOffLog: dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude,
+    dropOffLat: dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude,
+    dropOffTime: dropoffDatetime,
+    pickupTime: pickupDatetime,
+    pickupLat: pickupRentalInfo?.latitude,
+    pickupLog: pickupRentalInfo?.longitude,
+    groupCode,
+    vehicleDisplayGroupId,
+    mcpSessionId: request?.sessionId,
+  }
+  await getUbt({
+    pointId: 'mcp_car_more_price_all',
+    businessInfo: {
+      ...rentInfo
+    }
+  });
   const fullData: ResponseResult<IVehicleDetail> = await response.json();
   if (+fullData?.code === 0) {
+    await getUbt({
+      pointId: 'mcp_car_more_price_success',
+      businessInfo: {
+        ...rentInfo,
+        requestId: fullData?.data?.requestId,
+      }
+    });
     const result = {
       content: [{
         type: "text",
@@ -145,6 +171,14 @@ export async function handleVehicleMorePriceListV3(pickupRentalInfo: any, dropof
     });
     return result;
   }
+  await getUbt({
+    pointId: 'mcp_car_more_price_error',
+    businessInfo: {
+      ...rentInfo,
+      requestId: fullData?.data?.requestId,
+      errorMsg: fullData?.msg,
+    }
+  });
   return {
     content: [{
       type: "text",

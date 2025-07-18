@@ -32,7 +32,7 @@ export function registerRentCarsTool(server: Server) {
       switch (request.params.name) {
         case "search_carList_page_v3": {
           const { pickupRentalInfo, dropoffRentalInfo, filter = [] } = request.params.arguments;
-          const result = await handleSearchListV3(pickupRentalInfo, dropoffRentalInfo, filter);
+          const result = await handleSearchListV3(request, pickupRentalInfo, dropoffRentalInfo, filter);
           // 将数据写入数据库
           if (!result.isError) {
             try {
@@ -70,11 +70,11 @@ export function registerRentCarsTool(server: Server) {
         }
         case "car_more_price_link": {
           const { pickupRentalInfo, dropoffRentalInfo, vehicleDisplayGroupId } = request.params.arguments;
-          return await handleCarMorePriceLink(pickupRentalInfo, dropoffRentalInfo, vehicleDisplayGroupId);
+          return await handleCarMorePriceLink(request,pickupRentalInfo, dropoffRentalInfo, vehicleDisplayGroupId);
         }
         case "vehicle_more_price_list_v3": {
           const { pickupRentalInfo, dropoffRentalInfo, groupCode, vehicleDisplayGroupId } = request.params.arguments;
-          return await handleVehicleMorePriceListV3(pickupRentalInfo, dropoffRentalInfo, groupCode, vehicleDisplayGroupId);
+          return await handleVehicleMorePriceListV3(request, pickupRentalInfo, dropoffRentalInfo, groupCode, vehicleDisplayGroupId);
         }
         case "maps_regeocode": {
           const { location } = request.params.arguments;
