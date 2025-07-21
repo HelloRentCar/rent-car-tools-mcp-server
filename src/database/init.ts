@@ -19,7 +19,7 @@ export class DatabaseInitializer {
 
       // 获取迁移状态
       const status = await this.migrationManager.getMigrationStatus();
-      console.log(`数据库初始化完成 - 已应用 ${status.applied.length}/${status.total} 个迁移`);
+      // console.log(`数据库初始化完成 - 已应用 ${status.applied.length}/${status.total} 个迁移`);
 
     } catch (error) {
       console.error('数据库初始化失败:', error);

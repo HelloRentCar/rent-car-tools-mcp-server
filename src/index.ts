@@ -23,7 +23,7 @@ try {
     // 如果读取失败，使用默认值
     packageInfo = {
         name: '@hb/rent-car-tools-mcp-server',
-        version: '1.0.0-beta.19'
+        version: '1.0.0-beta.20'
     };
 }
 

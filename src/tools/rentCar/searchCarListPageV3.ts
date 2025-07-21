@@ -13,39 +13,39 @@ export const SEARCHCARLISTV3_TOOL = {
   inputSchema: {
     type: "object",
     properties: {
-      filter: {
-        type: "array",
-        description: "车辆筛选条件列表。每个筛选项用于限定返回的车辆范围，例如品牌、类型等。每个筛选项包含如下字段：code（筛选项编码，如品牌名拼音）、name（筛选项名称）、type（筛选类型，4为品牌）、disabled（是否禁用）、commonFilter（是否为常用筛选）、checkType（筛选方式，如'drop'为下拉选择）。例如：[{ code: '别克', name: '别克', type: 4, disabled: false, commonFilter: true, checkType: 'drop' }]",
-        items: {
-          type: "object",
-          properties: {
-            code: {
-              type: "string",
-              description: "筛选项名称，code与name值相同！！，例如 '别克'、'保时捷'"
-            },
-            name: {
-              type: "string",
-              description: "筛选项名称，例如 '别克'、'保时捷'"
-            },
-            type: {
-              type: "number",
-              description: "筛选类型，4表示品牌"
-            },
-            disabled: {
-              type: "boolean",
-              description: "该筛选项是否被禁用，默认值是false"
-            },
-            commonFilter: {
-              type: "boolean",
-              description: "是否为常用筛选项，默认值是true"
-            },
-            checkType: {
-              type: "string",
-              description: "筛选方式，如 'drop' 表示下拉选择，默认值是'drop'"
-            }
-          },
-        }
-      },
+      // filter: {
+      //   type: "array",
+      //   description: "车辆筛选条件列表。每个筛选项用于限定返回的车辆范围，例如品牌、类型等。每个筛选项包含如下字段：code（筛选项编码，如品牌名拼音）、name（筛选项名称）、type（筛选类型，4为品牌）、disabled（是否禁用）、commonFilter（是否为常用筛选）、checkType（筛选方式，如'drop'为下拉选择）。例如：[{ code: '别克', name: '别克', type: 4, disabled: false, commonFilter: true, checkType: 'drop' }]",
+      //   items: {
+      //     type: "object",
+      //     properties: {
+      //       code: {
+      //         type: "string",
+      //         description: "筛选项名称，code与name值相同！！，例如 '别克'、'保时捷'"
+      //       },
+      //       name: {
+      //         type: "string",
+      //         description: "筛选项名称，例如 '别克'、'保时捷'"
+      //       },
+      //       type: {
+      //         type: "number",
+      //         description: "筛选类型，4表示品牌"
+      //       },
+      //       disabled: {
+      //         type: "boolean",
+      //         description: "该筛选项是否被禁用，默认值是false"
+      //       },
+      //       commonFilter: {
+      //         type: "boolean",
+      //         description: "是否为常用筛选项，默认值是true"
+      //       },
+      //       checkType: {
+      //         type: "string",
+      //         description: "筛选方式，如 'drop' 表示下拉选择，默认值是'drop'"
+      //       }
+      //     },
+      //   }
+      // },
       pickupRentalInfo: {
         type: "object",
         description: "取车信息，包括取车地点、时间等详细参数。",
@@ -64,7 +64,7 @@ export const SEARCHCARLISTV3_TOOL = {
           },
           dateStr: {
             type: "string",
-            description: "取车日期, 如: 2025年07月20日 10:00, 如果没有年份信息默认为2025年, 取车时间大于当前时间"
+            description: "取车日期, 如: YYYY年MM月DD日 HH:mm, 如果没有年份信息默认为2025年, 取车时间大于当前时间"
           },
         },
         required: ["latitude", "longitude", "cityCode", "dateStr"]
@@ -87,7 +87,7 @@ export const SEARCHCARLISTV3_TOOL = {
           },
           dateStr: {
             type: "string",
-            description: "还车日期, 如: 2025年07月20日 10:00, 如果没有年份信息默认为2025年, 还车时间大于取车时间"
+            description: "还车日期, 如: YYYY年MM月DD日 HH:mm, 如果没有年份信息默认为2025年, 还车时间大于取车时间"
           },
         },
         required: ["latitude", "longitude", "cityCode", "dateStr"]
@@ -105,6 +105,8 @@ export const SEARCHCARLISTV3_TOOL = {
  */
 export async function handleSearchListV3(request: any, pickupRentalInfo: any, dropoffRentalInfo: any, filter = []) {
   const fetch = await getFetch();
+  const paramsTimestamp = Date.now(); // 当前时间戳
+
   // console.log('pickupRentalInfo', pickupRentalInfo);
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr);
@@ -124,12 +126,12 @@ export async function handleSearchListV3(request: any, pickupRentalInfo: any, dr
       "dateStr": dropoffRentalInfo?.dateStr,
       "datetime": dropoffDatetime
     },
-    "filter": filter || [],
+    // "filter": filter || [],
     "pageIndex": 1,
     "pageSize": 40,
   }
   const rentInfo = {
-    filter: JSON.stringify(filter),
+    // filter: JSON.stringify(filter),
     dropOffLog: dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude,
     dropOffLat: dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude,
     dropOffTime: dropoffDatetime,
@@ -143,6 +145,18 @@ export async function handleSearchListV3(request: any, pickupRentalInfo: any, dr
       ...rentInfo
     }
   });
+
+  if (dropoffDatetime < paramsTimestamp || pickupDatetime < paramsTimestamp || dropoffDatetime < pickupDatetime) {
+    return {
+      content: [{
+        type: "text",
+        text: `取车时间或还车时间小于当前时间，取还车时间请重新确认下！`,
+        data: [],
+        requestId: '',
+      }],
+      isError: true
+    };
+  }
   const response = await fetch('https://a.hellobike.com/rent/api?veh.search.page.v3', {
     method: "POST",
     body: JSON.stringify(reqJson),

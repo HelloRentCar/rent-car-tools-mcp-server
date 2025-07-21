@@ -1,16 +1,32 @@
 {
   "name": "@hb/rent-car-tools-mcp-server",
-  "version": "1.0.0-beta.19",
+  "version": "1.0.0-beta.20",
   "description": "租车工具mcp服务",
   "type": "module",
+  "main": "./dist/index.js",
   "bin": {
-    "mcp-server": "./dist/index.js"
+    "rent-car-tools-mcp-server": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "mcp",
+    "rent-car",
+    "model-context-protocol"
+  ],
+  "author": "哈啰租车",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hellobike/rent-car-tools-mcp-server.git"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && chmod 755 dist/index.js",
     "start": "node dist/index.js",
     "dev": "NODE_OPTIONS=\"--loader ts-node/esm\" node --trace-warnings src/index.ts ",
-    "dev:watch": "NODE_OPTIONS=\"--loader ts-node/esm\" nodemon --watch src --ext ts,json src/index.ts"
+    "dev:watch": "NODE_OPTIONS=\"--loader ts-node/esm\" nodemon --watch src --ext ts,json src/index.ts",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.10.2",
