@@ -1,6 +1,6 @@
 {
   "name": "@hb/rent-car-tools-mcp-server",
-  "version": "1.0.0-beta.20",
+  "version": "1.0.0-beta.21",
   "description": "租车工具mcp服务",
   "type": "module",
   "main": "./dist/index.js",
