@@ -111,7 +111,7 @@ export async function handleSearchListV3(request: any, pickupRentalInfo: any, dr
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr);
   const reqJson = {
-    "action": "veh.search.page.v3",
+    "action": "veh.search.page.v3.mcp",
     "pickupRentalInfo": {
       "cityCode": pickupRentalInfo?.cityCode,
       "latitude": pickupRentalInfo?.latitude,

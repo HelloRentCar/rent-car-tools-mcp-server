@@ -82,7 +82,7 @@ export async function handleVehicleMorePriceListV3(request: any, pickupRentalInf
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr);
   const reqJson = {
-    "action": "vehicle.more.price.list.v3",
+    "action": "vehicle.more.price.list.v3.mcp",
     "pickupRentalInfo": {
       "cityCode": pickupRentalInfo?.cityCode,
       "latitude": pickupRentalInfo?.latitude,
