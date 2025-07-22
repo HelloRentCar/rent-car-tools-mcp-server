@@ -109,14 +109,11 @@ export class MigrationManager {
       );
 
       if (pendingMigrations.length === 0) {
-        console.log('数据库已是最新版本');
         return;
       }
 
-      console.log(`发现 ${pendingMigrations.length} 个待执行的迁移`);
 
       for (const migration of pendingMigrations) {
-        console.log(`执行迁移 v${migration.version}: ${migration.description}`);
 
         await new Promise<void>((resolve, reject) => {
           this.db.serialize(() => {
@@ -135,13 +132,9 @@ export class MigrationManager {
             });
           });
         });
-
-        console.log(`迁移 v${migration.version} 执行完成`);
       }
 
-      console.log('所有迁移执行完成');
     } catch (error) {
-      console.error('迁移执行失败:', error);
       throw error;
     }
   }

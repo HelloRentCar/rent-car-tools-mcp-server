@@ -13,7 +13,7 @@ export const SEARCHCARLISTV3_TOOL = {
     type: "object",
     properties: {
       groupCode: {
-        type: "string",
+        type: "number",
         description: "车辆类型: 默认值是'00'(全部车型), '2'表示经济型, '3'表示舒适型, '6'表示SUV, '4'表示商务车, '5'表示豪华型, '101'表示新能源电车, '9'表示跑车, '10'表示皮卡"
       },
       filter: {
@@ -109,8 +109,6 @@ export const SEARCHCARLISTV3_TOOL = {
 export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInfo: any, groupCode: string, filter = []) {
   const fetch = await getFetch();
   const paramsTimestamp = Date.now(); // 当前时间戳
-
-  // console.log('pickupRentalInfo', pickupRentalInfo);
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr);
   const reqJson = {
@@ -130,7 +128,7 @@ export async function handleSearchListV3(pickupRentalInfo: any, dropoffRentalInf
       "datetime": dropoffDatetime
     },
     "filter": filter || [],
-    // "groupCode": groupCode || '00',
+    "groupCode": groupCode || '00',
     "pageIndex": 1,
     "pageSize": 40,
   }

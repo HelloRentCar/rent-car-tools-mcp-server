@@ -22,10 +22,8 @@ export class Database {
   private constructor() {
     this.db = new sqlite3.Database(DB_CONFIG.path, (err) => {
       if (err) {
-        console.error('数据库连接失败:', err.message);
         throw err;
       }
-      console.log('成功连接到SQLite数据库');
     });
   }
 
@@ -99,7 +97,6 @@ export class Database {
     for (const column of columnsToAdd) {
       const exists = await this.columnExists('vehicles', column.name);
       if (!exists) {
-        console.log(`添加列: ${column.name}`);
         await new Promise<void>((resolve, reject) => {
           this.db.run(
             `ALTER TABLE vehicles ADD COLUMN ${column.name} ${column.sql}`,
@@ -209,11 +206,6 @@ export class Database {
   // 关闭数据库连接
   public close(): void {
     this.db.close((err) => {
-      if (err) {
-        console.error('关闭数据库失败:', err.message);
-      } else {
-        console.log('数据库连接已关闭');
-      }
     });
   }
 }

@@ -12,17 +12,13 @@ export class DatabaseInitializer {
   // 初始化数据库
   public async initialize(): Promise<void> {
     try {
-      console.log('开始初始化数据库...');
-
       // 运行数据库迁移
       await this.migrationManager.migrate();
 
       // 获取迁移状态
       const status = await this.migrationManager.getMigrationStatus();
-      // console.log(`数据库初始化完成 - 已应用 ${status.applied.length}/${status.total} 个迁移`);
 
     } catch (error) {
-      console.error('数据库初始化失败:', error);
       throw error;
     }
   }
@@ -48,7 +44,6 @@ export class DatabaseInitializer {
         }
       };
     } catch (error) {
-      console.error('获取数据库状态失败:', error);
       return {
         initialized: false,
         migrations: {

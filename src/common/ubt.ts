@@ -24,6 +24,5 @@ export async function getUbt({ pointId, businessInfo = {} }: { pointId: string, 
       })
     });
   } catch (error) {
-    console.error('getUbt error', error);
   }
 }

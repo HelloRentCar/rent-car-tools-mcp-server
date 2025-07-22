@@ -7,8 +7,6 @@ export const getApiKey = () => {
 }
 export const getApiKeyValidate = (apiKey: string) => {
   if (!apiKey) {
-    // console.error("AMAP_MAPS_API_KEY environment variable is not set");
-    // process.exit(1);
     return {
       content: [{
         type: "text",

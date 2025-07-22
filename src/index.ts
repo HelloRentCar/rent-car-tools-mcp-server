@@ -23,7 +23,7 @@ try {
     // 如果读取失败，使用默认值
     packageInfo = {
         name: '@hb/rent-car-tools-mcp-server',
-        version: '1.0.0-beta.21'
+        version: '1.0.2'
     };
 }
 
@@ -34,12 +34,10 @@ async function main() {
             pointId: 'mcp_rent_start_all',
         });
         // 初始化数据库
-        console.log('正在初始化数据库...');
         await dbInitializer.initialize();
 
         // 获取数据库状态
         const dbStatus = await dbInitializer.getStatus();
-        console.log('数据库状态:', dbStatus);
 
         const server = new Server({
             name: packageInfo.name,
@@ -63,20 +61,17 @@ async function main() {
         getUbt({
             pointId: 'mcp_rent_start_error',
         });
-        console.error('服务启动失败:', error);
         process.exit(1);
     }
 }
 
 // 优雅关闭处理
 process.on('SIGINT', () => {
-    console.log('正在关闭服务...');
     dbInitializer.close();
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-    console.log('正在关闭服务...');
     dbInitializer.close();
     process.exit(0);
 });
