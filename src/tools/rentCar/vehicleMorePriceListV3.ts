@@ -1,13 +1,11 @@
-import { getFetch } from "../../common/index.js";
-import { toTimestamp } from "../../common/index.js";
+import { getFetch, toTimestamp } from "../../common/index.js";
 import { getUbt } from "../../common/ubt.js";
 import { ResponseResult } from "../../types/index.js";
 import { IVehicleDetail } from "../../types/searchPage.js";
-
 /** 用户查询具体车辆的全部供应商报价数据工具 */
 export const VEHICLEMOREPRICELISTV3_TOOL = {
   name: "vehicle_more_price_list_v3",
-  description: "依赖 search_carList_page_v3 工具中返回的车辆列表数据，获取特定车辆的详细价格信息，包含不同供应商的价格对比和门店评分等信息",
+  description: "【工具链第二步】基于search_carList_page_v3返回的车辆数据，查询指定车辆的详细价格信息，包含不同供应商的价格对比和门店评分等信息",
   inputSchema: {
     type: "object",
     properties: {
@@ -58,7 +56,7 @@ export const VEHICLEMOREPRICELISTV3_TOOL = {
         required: ["latitude", "longitude", "cityCode", "dateStr"]
       },
       groupCode: {
-        type: "number",
+        type: "string",
         description: "分组code，来源于 MCP工具 search_carList_page_v3 接口返回的车辆数据中vehicles字段中的groupCode, 如: '5'"
       },
       vehicleDisplayGroupId: {
@@ -69,7 +67,6 @@ export const VEHICLEMOREPRICELISTV3_TOOL = {
     required: ["pickupRentalInfo", "dropoffRentalInfo", "groupCode", "vehicleDisplayGroupId"]
   },
 };
-
 /**
  * 用户查询具体车辆的全部供应商报价数据工具
  * @param pickupRentalInfo 取车信息
@@ -77,7 +74,7 @@ export const VEHICLEMOREPRICELISTV3_TOOL = {
  * @param groupCode 车型分组code
  * @param vehicleDisplayGroupId 聚合组ID
  */
-export async function handleVehicleMorePriceListV3(request: any, pickupRentalInfo: any, dropoffRentalInfo: any, groupCode: string, vehicleDisplayGroupId: string) {
+export async function handleVehicleMorePriceListV3(pickupRentalInfo: any, dropoffRentalInfo: any, groupCode: string, vehicleDisplayGroupId: string) {
   const fetch = await getFetch();
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr);
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr);
@@ -100,15 +97,14 @@ export async function handleVehicleMorePriceListV3(request: any, pickupRentalInf
     "skip": 0,
     "groupCode": groupCode,
     "vehicleDisplayGroupId": vehicleDisplayGroupId,
-  }
-  const response = await fetch('https://a.hellobike.com/rent/api?vehicle.more.price.list.v3', {
+  };
+  const response = await fetch('https://a.hellobike.com/rent/api?vehicle.more.price.list.v3.mcp', {
     method: "POST",
     body: JSON.stringify(reqJson),
     headers: {
       "Content-Type": "application/json"
     }
   });
-
   const rentInfo = {
     dropOffLog: dropoffRentalInfo?.longitude || pickupRentalInfo?.longitude,
     dropOffLat: dropoffRentalInfo?.latitude || pickupRentalInfo?.latitude,
@@ -118,8 +114,7 @@ export async function handleVehicleMorePriceListV3(request: any, pickupRentalInf
     pickupLog: pickupRentalInfo?.longitude,
     groupCode,
     vehicleDisplayGroupId,
-    mcpSessionId: request?.sessionId,
-  }
+  };
   await getUbt({
     pointId: 'mcp_car_more_price_all',
     businessInfo: {
@@ -157,7 +152,7 @@ export async function handleVehicleMorePriceListV3(request: any, pickupRentalInf
             originTotalPrice: item?.originTotalPrice,
             totalPrice: item?.totalPrice,
             promoCardPlan: item?.promoCardPlan,
-          }
+          };
         }) || [],
         requestId: fullData?.data?.requestId || '',
       }],
@@ -189,4 +184,3 @@ export async function handleVehicleMorePriceListV3(request: any, pickupRentalInf
     isError: true
   };
 }
-

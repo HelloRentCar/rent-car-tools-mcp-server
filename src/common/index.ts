@@ -15,7 +15,7 @@ export async function getFetch() {
   }
 }
 
-export function toTimestamp(timeStr: string) {
+export const toTimestamp = (timeStr: string) => {
   const date = new Date(dayjs((timeStr).replace('年', '-').replace('月', '-').replace('日', '')).format('YYYY-MM-DD HH:mm:ss')).getTime()
   return date;
 }

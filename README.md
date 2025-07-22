@@ -1,60 +1,80 @@
-# @hb/rent-car-tools-mcp-server
+## 📋 项目概述
 
-租车工具MCP项目，基于Model Context Protocol SDK。
+** rent-car-tools-mcp-server** 是一个基于 Model Context Protocol (MCP) 的租车工具服务器，为 AI 助手提供租车相关的查询和地图服务功能。该服务器支持车辆搜索、价格查询、地图服务、车辆商品报价二维码等多种功能。
 
+### 🎯 主要功能
 
-## 一、开发说明
+- **车辆搜索**: 根据取还车时间和地点查询可用车辆
+- **价格查询**: 获取车辆详细价格信息
+- **地图服务**: 基于高德地图 API 的地理编码、路径规划、天气查询等服务
+  
+## 🔧 MCP 客户端配置
 
-### 安装依赖
-```bash
-npm install
-```
+### Node运行
 
-### 开发模式
-```bash
-npm run dev
-```
-
-### 构建项目
-```bash
-npm run build
-```
-
-### 启动服务
-```bash
-npm start
-```
-
-
-## 二、自定义MCP工具
-
-1. 在 `src/tools` 目录创建新的工具文件
-2. 在 `src/index.ts` 中引入并注册新工具
-
-
-## 三、配置 MCP Server
+在 Claude Desktop 的 MCP TOOLS 配置文件中添加：
 
 ```json
 {
   "mcpServers": {
     "rent-car-tools-mcp-server": {
       "command": "npx",
-      "args":[
-        "--registry=http://nodepackages.hellobike.cn:4873/", 
-        "@hb/rent-car-tools-mcp-server@latest"
+      "args": [
+        "rent-car-tools-mcp-server@latest"
       ],
+      "env": {
+        "AMAP_MAPS_API_KEY": "your_amap_api_key_here"
+      }
     }
   }
 }
 ```
 
-```json
-{
-  "mcpServers": {
-      "rent-car-tools-mcp-server": {
-      "type": "command",
-      "command": "node /Users/lilulu13753/hellobike/租车商户前端/rent-car-tools-mcp-server/dist/index.js"
-      }
-  }
-}
-```
+## 建议的工具调用流程
+
+### 正确的调用顺序
+
+1. **第一步**: 调用 `search_carList_page_v3`
+   - 输入：取车和还车的时间、地点信息
+   - 输出：可用车辆列表，包含后续需要的特定数据
+
+2. **第二步**: 调用 `vehicle_more_price_list_v3` 
+   - 输入：从第一步获取的车辆数据，选择心仪的车辆（获取特定参数）
+   - 输出：指定车辆的详细价格信息和供应商对比
+
+3. **第三步**: 调用 `car_more_price_link`
+   - 输入：从第一步获取的车辆数据，选择心仪的车辆（获取特定参数）
+   - 输出：二维码链接，用户可扫码查看详细报价
+
+## ⚠️ 注意事项
+
+1. **API 密钥**: 使用地图服务前必须配置有效的高德地图 API 密钥
+2. **时间格式**: 日期时间格式必须为 "YYYY年MM月DD日 HH:mm" 格式
+3. **坐标格式**: 经纬度坐标格式为 "经度,纬度"
+4. **城市代码**: 城市区号格式为三位数字，如上海为 "021"
+
+## 🐛 常见问题
+
+### Q: 如何获取高德地图 API 密钥？
+A: 访问高德开放平台 https://lbs.amap.com/ 注册账号并创建应用获取 API 密钥。
+
+### Q: 为什么车辆搜索返回空结果？
+A: 请检查：
+- 取还车时间是否正确（取车时间应大于当前时间，还车时间应大于取车时间）
+- 城市代码是否正确
+- 经纬度坐标是否准确
+
+### Q: 地图服务调用失败？
+A: 请检查：
+- AMAP_MAPS_API_KEY 环境变量是否正确设置
+- API 密钥是否有效且未过期
+- 网络连接是否正常
+
+## 📞 技术支持
+
+如有问题或建议，请联系哈啰租车技术团队 lilulu753@hellobike.com
+
+---
+
+**版本**: 1.0.1
+**最后更新**: 2025年7月 

@@ -1,14 +1,14 @@
 {
-  "name": "@hb/rent-car-tools-mcp-server",
-  "version": "1.0.0-beta.21",
+  "name": "rent-car-tools-mcp-server",
+  "version": "1.0.1",
   "description": "租车工具mcp服务",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./build/index.js",
   "bin": {
-    "rent-car-tools-mcp-server": "./dist/index.js"
+    "rent-car-tools-mcp-server": "./build/index.js"
   },
   "files": [
-    "dist"
+    "build"
   ],
   "keywords": [
     "mcp",
@@ -19,21 +19,22 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hellobike/rent-car-tools-mcp-server.git"
+    "url": "git+https://github.com/HelloRentCar/rent-car-tools-mcp-server.git"
   },
   "scripts": {
-    "build": "tsc && chmod 755 dist/index.js",
-    "start": "node dist/index.js",
+    "build": "tsc && chmod 755 build/index.js",
+    "start": "node build/index.js",
     "dev": "NODE_OPTIONS=\"--loader ts-node/esm\" node --trace-warnings src/index.ts ",
-    "dev:watch": "NODE_OPTIONS=\"--loader ts-node/esm\" nodemon --watch src --ext ts,json src/index.ts",
-    "prepublishOnly": "npm run build"
+    "dev:watch": "NODE_OPTIONS=\"--loader ts-node/esm\" nodemon --watch src --ext ts,json src/index.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.10.2",
     "axios": "^1.10.0",
+    "crypto": "^1.0.1",
     "dayjs": "^1.11.13",
     "dotenv": "^17.0.0",
     "express": "^4.18.2",
+    "js-shortid": "^0.1.1",
     "node-fetch": "^3.3.2",
     "sqlite3": "^5.1.7",
     "zod": "^3.25.55"
@@ -49,5 +50,9 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

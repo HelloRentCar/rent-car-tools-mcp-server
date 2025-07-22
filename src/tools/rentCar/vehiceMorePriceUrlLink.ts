@@ -6,7 +6,7 @@ import { getUbt } from "../../common/ubt.js";
  */
 export const MORE_PRICE_URL_LINK_TOOL = {
   name: "car_more_price_link",
-  description: "依赖 search_carList_page_v3 工具中返回的车辆列表数据，根据用户选择车辆的聚合组ID（字段为vehicleDisplayGroupId），生成以二维码图片形式的报价页面URL便于用户扫码查看",
+  description: "【工具链第三步】基于search_carList_page_v3返回的vehicleDisplayGroupId，生成车辆详细报价页面的二维码链接，便于用户扫码查看和下单",
   inputSchema: {
     type: "object",
     properties: {
@@ -87,8 +87,7 @@ export const MORE_PRICE_URL_LINK_TOOL = {
     },
     required: ["pickupRentalInfo", "dropoffRentalInfo", "vehicleDisplayGroupId"]
   }
-}
-
+};
 /**
  * 
  * @param pickupRentalInfo 
@@ -96,7 +95,7 @@ export const MORE_PRICE_URL_LINK_TOOL = {
  * @param vehicleDisplayGroupId 
  * @returns 
  */
-export async function handleCarMorePriceLink(request: any, pickupRentalInfo: any, dropoffRentalInfo: any, vehicleDisplayGroupId: string) {
+export async function handleCarMorePriceLink(pickupRentalInfo: any, dropoffRentalInfo: any, vehicleDisplayGroupId: string) {
   const paramsTimestamp = Date.now(); // 当前时间戳
   const pickupDatetime = toTimestamp(pickupRentalInfo?.dateStr) || '';
   const dropoffDatetime = toTimestamp(dropoffRentalInfo?.dateStr) || '';
@@ -108,7 +107,6 @@ export async function handleCarMorePriceLink(request: any, pickupRentalInfo: any
     pickupLat: pickupRentalInfo?.latitude,
     pickupLog: pickupRentalInfo?.longitude,
     vehicleDisplayGroupId,
-    mcpSessionId: request?.sessionId,
   }
   await getUbt({
     pointId: 'mcp_link_more_price_all',
@@ -116,7 +114,7 @@ export async function handleCarMorePriceLink(request: any, pickupRentalInfo: any
       ...rentInfo,
     }
   });
- 
+
   const shortUrl = `https://m.hellobike.com/hellorentmoreprice?from=quoteQrCode&vehicleDisplayGroupId=${vehicleDisplayGroupId}&bizCityCode=${pickupRentalInfo?.cityCode}&bizCityName=${pickupRentalInfo?.cityName}&bizLocationName=${pickupRentalInfo?.locationName}&bizLatitude=${pickupRentalInfo?.latitude}&bizLongitude=${pickupRentalInfo?.longitude}&bizAdCode=${pickupRentalInfo?.adCode}&startDatetime=${pickupDatetime}&endDatetime=${dropoffDatetime}&paramsTimestamp=${paramsTimestamp}&adSource=mcp`;
   await getUbt({
     pointId: 'mcp_link_more_price_success',
