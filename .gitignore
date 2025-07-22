@@ -1,7 +1,7 @@
 # Source files
-# src/
-# *.ts
-# *.tsx
+src/
+*.ts
+*.tsx
 
 # Node.js
 node_modules/
@@ -10,7 +10,6 @@ yarn-debug.log
 yarn-error.log
 
 # TypeScript
-build/
 *.tsbuildinfo
 
 # Logs
@@ -37,7 +36,7 @@ logs
 Thumbs.db
 
 
-# tsconfig.json
-# package-lock.json
+tsconfig.json
+package-lock.json
 
-# *.sqlite
+*.sqlite
