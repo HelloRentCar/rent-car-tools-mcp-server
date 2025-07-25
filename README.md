@@ -20,6 +20,7 @@
     "rent-car-tools-mcp-server": {
       "command": "npx",
       "args": [
+        "-y",
         "rent-car-tools-mcp-server@latest"
       ],
       "env": {
