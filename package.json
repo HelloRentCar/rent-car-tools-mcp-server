@@ -1,6 +1,6 @@
 {
   "name": "rent-car-tools-mcp-server",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "租车工具mcp服务",
   "type": "module",
   "main": "./build/index.js",
