@@ -207,12 +207,12 @@ export async function handleSearchListV3(pickupRentalInfo, dropoffRentalInfo, gr
                         lowestTotalPrice: item?.lowestTotalPrice,
                         priceTotalNum: item?.priceTotalNum || {},
                         restNum: item?.restNum,
-                        storeTerms: item?.storeTerms?.map((item) => ({
-                            termName: item?.termName,
-                        })) || [],
-                        terms: item?.terms?.map((item) => ({
-                            termName: item?.termName,
-                        })) || [],
+                        // storeTerms: item?.storeTerms?.map((item) => ({
+                        //     termName: item?.termName,
+                        // })) || [],
+                        // terms: item?.terms?.map((item) => ({
+                        //     termName: item?.termName,
+                        // })) || [],
                     })) || [],
                     requestId: fullData?.data?.requestId,
                 }],
