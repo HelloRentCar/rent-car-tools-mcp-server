@@ -128,13 +128,25 @@ export async function handleVehicleMorePriceListV3(pickupRentalInfo, dropoffRent
                 requestId: fullData?.data?.requestId,
             }
         });
+
+        if (fullData?.data?.suppliers?.length === 0) {
+            return {
+                content: [{
+                    type: "text",
+                    text: `该车型下没有更多供应商报价`,
+                    requestId: result?.content?.[0]?.requestId || '',
+                    data: [],
+                }],
+                isError: false
+            }
+        }
         const result = {
             content: [{
                     type: "text",
                     text: `数据处理中...`,
                     data: fullData?.data?.suppliers?.map((item) => {
                         return {
-                            vehicleInfo: item?.vehicleInfo?.map((item) => ({
+                            vehicleInfo: Object.keys(item?.vehicleInfo || {})?.length ? {
                                 vehicleDisplayGroupId: item?.vehicleDisplayGroupId,
                                 vehicleDisplayGroupName: item?.vehicleDisplayGroupName,
                                 vehicleSeriesName: item?.vehicleSeriesName,
@@ -143,19 +155,21 @@ export async function handleVehicleMorePriceListV3(pickupRentalInfo, dropoffRent
                                 groupCode: item?.groupCode,
                                 brandName: item?.brandName,
                                 displacement: item?.displacement,
-                                passengerNo: item?.passengerNo,
+                                displacementRange: item?.displacementRange,
                                 transmissionType: item?.transmissionType,
                                 passengerNo: item?.passengerNo,
                                 doorNo: item?.doorNo,
+                                fuelTypeName: item?.fuelTypeName,
                                 pcImgUrl: item?.pcImgUrl,
                                 mobileImgUrl: item?.mobileImgUrl,
+                                modelYear: item?.modelYear,
                                 suggestedRetailPrice: item?.suggestedRetailPrice,
-                            })) || [],
+                            } : {},
                             siteCommentScore: item?.siteCommentScore || 0,
-                            supplierInfo: item?.supplierInfo?.map((item) => ({
+                            supplierInfo: {
                                 supplierName: item?.supplierName,
                                 companyName: item?.companyName,
-                            })) || [],
+                            },
                             cornerTerms: item?.cornerTerms?.map((item) => item?.termName) || [],
                             goodsId: item?.goodsId,
                             originTotalPrice: item?.originTotalPrice,
